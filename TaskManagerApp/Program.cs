@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using TaskManagerApp.Data;
+
 namespace TaskManagerApp
 {
     public class Program
@@ -6,22 +9,29 @@ namespace TaskManagerApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // DbContext
+            builder.Services.AddDbContext<TaskManagerDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Controllers
             builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
+
+            // Swagger
+            builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
+            // Swagger UI
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            app.UseAuthorization();
+            app.UseHttpsRedirection();
 
-            // TEST ROUTE
-            app.MapGet("/", () => "Task Manager API Running");
+            app.UseAuthorization();
 
             app.MapControllers();
 
