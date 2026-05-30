@@ -8,12 +8,16 @@ namespace TaskManagerApp.Data.Models
         [Key]
         [ForeignKey(nameof(User))]
         public int UserId { get; set; }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
         public User User { get; set; }
 
         public int HighestStreak { get; set; } = 0;
 
         public int TasksCompleted { get; set; } = 0;
+<<<<<<< Updated upstream
 
         public int ChallengesCompleted { get; set; } = 0;
 
@@ -23,5 +27,9 @@ namespace TaskManagerApp.Data.Models
 
         public DateTime LastUpdatedAt { get; set; }
             = DateTime.UtcNow;
+=======
+        public int ChallengesCompleted { get; set; } = 0;
+        public int TotalPoints { get; set; } = 0;
+>>>>>>> Stashed changes
     }
 }

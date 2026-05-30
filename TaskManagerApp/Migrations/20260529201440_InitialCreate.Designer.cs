@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TaskManagerApp.Data;
@@ -11,9 +12,11 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    partial class TaskManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260529201440_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,21 +57,13 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskItemUser", b =>
                 {
-<<<<<<< Updated upstream
-                    b.Property<int>("TaskItemsId")
-=======
                     b.Property<int>("TasksId")
->>>>>>> Stashed changes
                         .HasColumnType("integer");
 
                     b.Property<int>("UsersId")
                         .HasColumnType("integer");
 
-<<<<<<< Updated upstream
-                    b.HasKey("TaskItemsId", "UsersId");
-=======
                     b.HasKey("TasksId", "UsersId");
->>>>>>> Stashed changes
 
                     b.HasIndex("UsersId");
 
@@ -127,8 +122,6 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("Challenges");
                 });
 
-<<<<<<< Updated upstream
-=======
             modelBuilder.Entity("TaskManagerApp.Data.Models.ChallengesUsers", b =>
                 {
                     b.Property<int>("ChallengeId")
@@ -149,7 +142,6 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("ChallengesUsers");
                 });
 
->>>>>>> Stashed changes
             modelBuilder.Entity("TaskManagerApp.Data.Models.Rank", b =>
                 {
                     b.Property<int>("Id")
@@ -196,37 +188,23 @@ namespace TaskManagerApp.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-<<<<<<< Updated upstream
-=======
                         .IsRequired()
->>>>>>> Stashed changes
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
-<<<<<<< Updated upstream
-=======
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
->>>>>>> Stashed changes
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("StateId")
                         .HasColumnType("integer");
 
-<<<<<<< Updated upstream
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-=======
->>>>>>> Stashed changes
                     b.HasKey("Id");
 
                     b.HasIndex("StateId");
@@ -305,52 +283,17 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("HighestStreak")
                         .HasColumnType("integer");
 
-<<<<<<< Updated upstream
-                    b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-=======
->>>>>>> Stashed changes
                     b.Property<int>("TasksCompleted")
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalPoints")
                         .HasColumnType("integer");
 
-<<<<<<< Updated upstream
-                    b.Property<int>("TotalTasksCreated")
-                        .HasColumnType("integer");
-
-=======
->>>>>>> Stashed changes
                     b.HasKey("UserId");
 
                     b.ToTable("UserStats");
                 });
 
-<<<<<<< Updated upstream
-            modelBuilder.Entity("TaskManagerApp.Data.Models.UsersChallenges", b =>
-                {
-                    b.Property<int>("ChallengeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StateId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ChallengeId", "UserId");
-
-                    b.HasIndex("StateId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ChallengesUsers");
-                });
-
-=======
->>>>>>> Stashed changes
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersRelations", b =>
                 {
                     b.Property<int>("InitiatorId")
@@ -424,11 +367,7 @@ namespace TaskManagerApp.Migrations
                 {
                     b.HasOne("TaskManagerApp.Data.Models.TaskItem", null)
                         .WithMany()
-<<<<<<< Updated upstream
-                        .HasForeignKey("TaskItemsId")
-=======
                         .HasForeignKey("TasksId")
->>>>>>> Stashed changes
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -450,8 +389,6 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Category");
                 });
 
-<<<<<<< Updated upstream
-=======
             modelBuilder.Entity("TaskManagerApp.Data.Models.ChallengesUsers", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.Challenge", "Challenge")
@@ -479,7 +416,6 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("User");
                 });
 
->>>>>>> Stashed changes
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.State", "State")
@@ -532,36 +468,6 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("User");
                 });
 
-<<<<<<< Updated upstream
-            modelBuilder.Entity("TaskManagerApp.Data.Models.UsersChallenges", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.Challenge", "Challenge")
-                        .WithMany("UsersChallenges")
-                        .HasForeignKey("ChallengeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", "User")
-                        .WithMany("UsersChallenges")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Challenge");
-
-                    b.Navigation("State");
-
-                    b.Navigation("User");
-                });
-
-=======
->>>>>>> Stashed changes
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersRelations", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.User", "Initiator")
@@ -584,21 +490,13 @@ namespace TaskManagerApp.Migrations
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersTasks", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.TaskItem", "Task")
-<<<<<<< Updated upstream
-                        .WithMany("UsersTasks")
-=======
                         .WithMany("TasksUsers")
->>>>>>> Stashed changes
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("TaskManagerApp.Data.Models.User", "User")
-<<<<<<< Updated upstream
-                        .WithMany("UsersTasks")
-=======
                         .WithMany("TasksUsers")
->>>>>>> Stashed changes
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -615,22 +513,14 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.Challenge", b =>
                 {
-<<<<<<< Updated upstream
-                    b.Navigation("UsersChallenges");
-=======
                     b.Navigation("ChallengesUsers");
->>>>>>> Stashed changes
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
                 {
                     b.Navigation("TasksCategories");
 
-<<<<<<< Updated upstream
-                    b.Navigation("UsersTasks");
-=======
                     b.Navigation("TasksUsers");
->>>>>>> Stashed changes
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>
@@ -642,15 +532,9 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Stats")
                         .IsRequired();
 
-<<<<<<< Updated upstream
-                    b.Navigation("UsersChallenges");
-
-                    b.Navigation("UsersTasks");
-=======
                     b.Navigation("TasksUsers");
 
                     b.Navigation("UsersChallenges");
->>>>>>> Stashed changes
                 });
 #pragma warning restore 612, 618
         }

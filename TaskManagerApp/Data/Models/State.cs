@@ -9,12 +9,22 @@ namespace TaskManagerApp.Data.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+<<<<<<< Updated upstream
         public enum TaskState
+=======
+        public enum StateType
+>>>>>>> Stashed changes
         {
             NotStarted,
             InProgress,
             Completed,
             Overdue
+<<<<<<< Updated upstream
         }
+=======
+        };
+
+
+>>>>>>> Stashed changes
     }
 }
