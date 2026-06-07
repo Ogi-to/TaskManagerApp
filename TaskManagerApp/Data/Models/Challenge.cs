@@ -26,5 +26,9 @@ namespace TaskManagerApp.Data.Models
         public List<User> Users { get; set; } = new List<User>();
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
+
+        public int StateId { get; set; }
+        public State State { get; set; }
+
     }
 }
