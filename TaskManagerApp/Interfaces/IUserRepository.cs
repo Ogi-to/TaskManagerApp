@@ -8,17 +8,18 @@ namespace TaskManagerApp.Interfaces
         public User Get(User item);
 
         public void CreateAccount();
+        public List<User> GetAllUsers();
+
         public void CreateAccount(User item);
 
-        public void UpdateAccount();
         public void UpdateAccount(User item);
 
         public void SendRequest();
 
         public void RespondToRequest();
 
-        public void GetFriendsList();
+        public List<User> GetFriendsList();
 
-        public void GetFriendByName();
+        public User GetFriendByName(User item);
     }
 }
