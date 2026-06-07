@@ -4,10 +4,8 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IUserRepository
     {
-        public User Get();
         public User Get(User item);
 
-        public void CreateAccount();
         public List<User> GetAllUsers();
 
         public void CreateAccount(User item);
