@@ -10,13 +10,15 @@ namespace TaskManagerApp.Interfaces
 
         public void CreateAccount(User item);
 
-        public void UpdateAccount(User item);
+        public void UpdateAccountInfo(User item);
 
-        public void SendRequest();
+        public void UpdateUserInfo(User item);
 
-        public void RespondToRequest();
+        public void SendRequest(UsersRelations relation);
 
-        public List<User> GetFriendsList();
+        public void RespondToRequest(UsersRelations relation);
+
+        public List<User> GetFriendsList(User item);
 
         public User GetFriendByName(User item);
     }

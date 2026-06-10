@@ -9,12 +9,13 @@ namespace TaskManagerApp.Data.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public enum TaskState
-        {
-            NotStarted,
-            InProgress,
-            Completed,
-            Overdue
-        }
+        public StateType Type { get; set; }
+    }
+    public enum StateType
+    {
+        NotStarted,
+        InProgress,
+        Completed,
+        Overdue
     }
 }
