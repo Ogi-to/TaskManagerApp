@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TaskManagerApp.Data.Models
@@ -9,22 +9,13 @@ namespace TaskManagerApp.Data.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-<<<<<<< Updated upstream
-        public enum TaskState
-=======
-        public enum StateType
->>>>>>> Stashed changes
-        {
-            NotStarted,
-            InProgress,
-            Completed,
-            Overdue
-<<<<<<< Updated upstream
-        }
-=======
-        };
-
-
->>>>>>> Stashed changes
+        public StateType Type { get; set; }
+    }
+    public enum StateType
+    {
+        NotStarted,
+        InProgress,
+        Completed,
+        Overdue
     }
 }

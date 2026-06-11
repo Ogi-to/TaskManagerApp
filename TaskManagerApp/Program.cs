@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TaskManagerApp.Data;
+using TaskManagerApp.Interfaces;
+using TaskManagerApp.Repositories;
 
 namespace TaskManagerApp
 {
@@ -18,6 +20,7 @@ namespace TaskManagerApp
 >>>>>>> Stashed changes
             // Controllers
             builder.Services.AddControllers();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             // Swagger
             builder.Services.AddEndpointsApiExplorer();

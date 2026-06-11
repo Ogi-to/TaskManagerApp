@@ -49,5 +49,9 @@ namespace TaskManagerApp.Data.Models
 
 >>>>>>> Stashed changes
 
+
+        public int StateId { get; set; }
+        public State State { get; set; }
+
     }
 }
