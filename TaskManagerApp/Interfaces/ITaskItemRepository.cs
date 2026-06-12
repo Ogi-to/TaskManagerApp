@@ -7,13 +7,13 @@ namespace TaskManagerApp.Interfaces
    
         public TaskItem Get(TaskItem item);
 
-        public TaskItem Update(TaskItem item);
+        public void Update(TaskItem item);
 
-        public TaskItem Delete(TaskItem item);
+        public void Delete(TaskItem item);
 
-        public TaskItem AddTask(TaskItem item);
+        public void AddTask(TaskItem item);
 
-        public TaskItem AssignToUser();
+        public void AssignToUser(TaskItem task , User user);
 
         public List<TaskItem> GetAll();
     }

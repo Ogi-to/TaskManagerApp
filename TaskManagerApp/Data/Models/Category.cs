@@ -15,9 +15,6 @@ namespace TaskManagerApp.Data.Models
 
         public List<TaskItem> Tasks { get; set; } = new List<TaskItem>();
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
     }
 }

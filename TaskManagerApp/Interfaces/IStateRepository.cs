@@ -6,6 +6,6 @@ namespace TaskManagerApp.Interfaces
     {
         public State Get(State item);
 
-        public void Update(State item);
+        public List<State> GetAll();
     }
 }

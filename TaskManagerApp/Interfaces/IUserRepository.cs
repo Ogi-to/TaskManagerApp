@@ -7,6 +7,9 @@ namespace TaskManagerApp.Interfaces
         public User Get(User item);
 
         public List<User> GetAllUsers();
+        public User GetByEmail(string email);
+        public User GetByUsername(string username);
+        public User GetByUserCode(string userCode);
 
         public void CreateAccount(User item);
 
@@ -20,6 +23,6 @@ namespace TaskManagerApp.Interfaces
 
         public List<User> GetFriendsList(User item);
 
-        public User GetFriendByName(User item);
+        
     }
 }
