@@ -15,10 +15,11 @@ namespace TaskManagerApp.Repositories
         }
 
 
-        public void CreateAccount(User item)
+        public User CreateAccount(User item)
         {
             _context.Users.Add(item);
             _context.SaveChanges();
+            return item;
         }
 
         public List<User> GetAllUsers()
@@ -43,19 +44,49 @@ namespace TaskManagerApp.Repositories
             return _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
         }
 
-
-        public void RespondToRequest(UsersRelations relation)
+        public UsersRelations GetRelation(int initiatorId, int relatedUserId)
         {
-            UsersRelations relationToModify = _context.UsersRelations.Where(i => i.InitiatorId == relation.InitiatorId).Where(r => r.RelatedUserId == relation.RelatedUserId).FirstOrDefault();
-            relationToModify.RelationStatus = relation.RelationStatus;
-            relationToModify.RelationType = relation.RelationType;
-            _context.SaveChanges();
+            return _context.UsersRelations.FirstOrDefault(r => r.InitiatorId == initiatorId && r.RelatedUserId == relatedUserId);
         }
 
+
+        //public void RespondToRequest(UsersRelations relation)
+        //{
+        //UsersRelations relationToModify = _context.UsersRelations.Where(i => i.InitiatorId == relation.InitiatorId).Where(r => r.RelatedUserId == relation.RelatedUserId).FirstOrDefault();
+        //relationToModify.RelationStatus = relation.RelationStatus;
+        //relationToModify.RelationType = relation.RelationType;
+        //_context.SaveChanges();
+        //}
+
+        public bool RespondToRequest(UsersRelations relation)
+        {
+            var relationToModify = _context.UsersRelations
+                .FirstOrDefault(r =>
+                    r.InitiatorId == relation.InitiatorId &&
+                    r.RelatedUserId == relation.RelatedUserId);
+
+            if (relationToModify == null)
+                return false;
+
+            relationToModify.RelationStatus = relation.RelationStatus;
+            relationToModify.RelationType = relation.RelationType;
+
+            _context.SaveChanges();
+
+            return true;
+        }
+
+        //public void SendRequest(UsersRelations relation)
+        //{ 
+        //    _context.UsersRelations.Add(relation);
+        //    _context.SaveChanges();
+        //}
+
         public void SendRequest(UsersRelations relation)
-        { 
+        {
             _context.UsersRelations.Add(relation);
             _context.SaveChanges();
+
         }
 
         public void UpdateAccountInfo(User item)
