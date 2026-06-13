@@ -10,11 +10,8 @@ namespace TaskManagerApp.Data.Models
         public int Id { get; set; }
 
         [Required]
-<<<<<<< Updated upstream
-        [StringLength(50)]
-=======
         [StringLength(50, MinimumLength = 3)]
->>>>>>> Stashed changes
+
         public string Name { get; set; }
 
         [Required]

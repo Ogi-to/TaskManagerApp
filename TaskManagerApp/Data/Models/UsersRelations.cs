@@ -1,9 +1,7 @@
-<<<<<<< Updated upstream
-﻿using System.ComponentModel.DataAnnotations.Schema;
-=======
+
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
->>>>>>> Stashed changes
+
 
 namespace TaskManagerApp.Data.Models
 {
@@ -39,7 +37,4 @@ namespace TaskManagerApp.Data.Models
         Rejected
     }
 }
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes

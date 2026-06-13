@@ -10,7 +10,7 @@
         public Challenge Challenge { get; set; }
 
         public int StateId { get; set; }
-        public State State { get; set; }
+        public StateType State { get; set; }
 
 
     }

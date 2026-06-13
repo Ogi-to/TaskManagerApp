@@ -6,7 +6,7 @@ namespace TaskManagerApp.Interfaces
     {
         public UserStats Get(UserStats item);
 
-        public UserStats Update(UserStats item);
+        public void Update(UserStats item);
 
 
     }

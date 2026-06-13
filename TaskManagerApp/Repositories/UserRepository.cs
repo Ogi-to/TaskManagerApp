@@ -28,12 +28,19 @@ namespace TaskManagerApp.Repositories
 
         public User Get(User item)
         {
-            return _context.Users.Where(u => u.Id == item.Id).Include(u => u.TaskItems).Include(u => u.Challenges).FirstOrDefault();
+            return _context.Users.Where(u => u.Id == item.Id).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
         }
-
-        public User GetFriendByName(User item)
+        public User GetByEmail(string email)
         {
-            return _context.Users.Where(u => u.Username == item.Username).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Stats).FirstOrDefault();
+            return _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+        }
+        public User GetByUsername(string username)
+        {
+            return _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+        }
+        public User GetByUserCode(string userCode)
+        {
+            return _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
         }
 
 
