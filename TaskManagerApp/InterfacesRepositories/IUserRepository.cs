@@ -4,7 +4,7 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IUserRepository
     {
-        public User Get(User item);
+        public User Get(int id);
 
         public List<User> GetAllUsers();
         public User GetByEmail(string email);

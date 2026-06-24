@@ -1,0 +1,52 @@
+﻿@page "/fetch user"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@using TaskManagerApp.Data.Models
+
+@inject HttpClient Http
+
+<PageTitle>FetchUser</PageTitle>
+
+<h1>FetchUser</h1>
+
+<input class="form-control"
+	   placeholder="Enter username"
+	   @bind  = "username" />
+
+<button class="btn btn-primary"
+        @onclick="GetUser">Search</button>
+
+@if (user != null)
+{
+	<h3>user found</h3>
+	<p>Name: @user.Username</p>
+	<p>Email: @user.Email</p>
+}
+else if (searched)
+{
+	<h3>user not found</h3>
+}
+
+@code {
+	private string username = "";
+	private User user;
+	private bool searched;
+
+    private async Task GetUser()
+    {
+        var response = await Http.GetAsync(
+            $"api/User/username/{username}"
+        );
+
+        if (response.IsSuccessStatusCode)
+        {
+            user = await response.Content.ReadFromJsonAsync<User>();
+            searched = true;
+        }
+        else
+        {
+            user = null;
+            searched = true;
+        }
+    }
+}

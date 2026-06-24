@@ -26,7 +26,7 @@ namespace TaskManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (_userRepository.Get(user) != null)
+            if (_userRepository.Get(user.Id) != null)
             {
                 return Conflict("User with the same username or email already exists.");
             }
@@ -42,8 +42,10 @@ namespace TaskManagerApp.Controllers
         }
 
 
+
+
         [HttpGet("{id}")]
-        public IActionResult Get(User item)
+        public IActionResult Get(int id)
         {
 
             if (!ModelState.IsValid)
@@ -51,11 +53,12 @@ namespace TaskManagerApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (item == null)
+            var user = _userRepository.Get(id);
+            if (user == null)
             {
                 return NotFound();
             }
-            var user = _userRepository.Get(item);
+            
 
             return Ok(user);
         }
@@ -81,17 +84,13 @@ namespace TaskManagerApp.Controllers
         [HttpGet("username/{username}")]
         public IActionResult GetByUsername(string username)
         {
+            if (string.IsNullOrWhiteSpace(username))
+                return BadRequest();
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (username == null)
-            {
-                return NotFound();
-            }
             var user = _userRepository.GetByUsername(username);
+
+            if (user == null)
+                return NotFound();
 
             return Ok(user);
         }
@@ -117,16 +116,15 @@ namespace TaskManagerApp.Controllers
         [HttpGet("getAll-users")]
         public IActionResult GetAllUsers()
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                var users = _userRepository.GetAllUsers();
+                return Ok(users);
             }
-
-            var users = _userRepository.GetAllUsers();
-
-            return Ok(users);
-
-
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPut("update-account-info")]
@@ -136,7 +134,7 @@ namespace TaskManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (_userRepository.Get(user) == null)
+            if (_userRepository.Get(user.Id) == null)
             {
                 return NotFound();
             }
@@ -151,7 +149,7 @@ namespace TaskManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (_userRepository.Get(user) == null)
+            if (_userRepository.Get(user.Id) == null)
             {
                 return NotFound();
             }
@@ -209,7 +207,7 @@ namespace TaskManagerApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = _userRepository.Get(item);
+            var user = _userRepository.Get(item.Id);
 
             if (user == null)
             {

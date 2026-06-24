@@ -12,8 +12,8 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    [Migration("20260529211619_Create")]
-    partial class Create
+    [Migration("20260615191604_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,13 +57,13 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskItemUser", b =>
                 {
-                    b.Property<int>("TaskItemsId")
+                    b.Property<int>("TasksId")
                         .HasColumnType("integer");
 
                     b.Property<int>("UsersId")
                         .HasColumnType("integer");
 
-                    b.HasKey("TaskItemsId", "UsersId");
+                    b.HasKey("TasksId", "UsersId");
 
                     b.HasIndex("UsersId");
 
@@ -112,6 +112,12 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("integer");
 
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StateId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Trophy")
                         .HasColumnType("integer");
 
@@ -154,6 +160,9 @@ namespace TaskManagerApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("States");
@@ -168,25 +177,27 @@ namespace TaskManagerApp.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
 
                     b.Property<int>("StateId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("StateId");
 
                     b.ToTable("TaskItems");
                 });
@@ -237,7 +248,8 @@ namespace TaskManagerApp.Migrations
 
                     b.Property<string>("UserCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -262,16 +274,10 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("HighestStreak")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("TasksCompleted")
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalPoints")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalTasksCreated")
                         .HasColumnType("integer");
 
                     b.HasKey("UserId");
@@ -287,16 +293,17 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
                     b.Property<int>("StateId")
                         .HasColumnType("integer");
 
                     b.HasKey("ChallengeId", "UserId");
 
-                    b.HasIndex("StateId");
-
                     b.HasIndex("UserId");
 
-                    b.ToTable("ChallengesUsers");
+                    b.ToTable("UsersChallenges");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersRelations", b =>
@@ -335,7 +342,7 @@ namespace TaskManagerApp.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TasksUsers");
+                    b.ToTable("UsersTasks");
                 });
 
             modelBuilder.Entity("CategoryTaskItem", b =>
@@ -372,7 +379,7 @@ namespace TaskManagerApp.Migrations
                 {
                     b.HasOne("TaskManagerApp.Data.Models.TaskItem", null)
                         .WithMany()
-                        .HasForeignKey("TaskItemsId")
+                        .HasForeignKey("TasksId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -392,17 +399,6 @@ namespace TaskManagerApp.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("State");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.TasksCategories", b =>
@@ -454,12 +450,6 @@ namespace TaskManagerApp.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TaskManagerApp.Data.Models.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("TaskManagerApp.Data.Models.User", "User")
                         .WithMany("UsersChallenges")
                         .HasForeignKey("UserId")
@@ -467,8 +457,6 @@ namespace TaskManagerApp.Migrations
                         .IsRequired();
 
                     b.Navigation("Challenge");
-
-                    b.Navigation("State");
 
                     b.Navigation("User");
                 });
@@ -495,7 +483,7 @@ namespace TaskManagerApp.Migrations
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersTasks", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.TaskItem", "Task")
-                        .WithMany("UsersTasks")
+                        .WithMany("TasksUsers")
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -525,7 +513,7 @@ namespace TaskManagerApp.Migrations
                 {
                     b.Navigation("TasksCategories");
 
-                    b.Navigation("UsersTasks");
+                    b.Navigation("TasksUsers");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>

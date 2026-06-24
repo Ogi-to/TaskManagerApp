@@ -12,8 +12,8 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    [Migration("20260529201440_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260615191841_Create")]
+    partial class Create
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -112,6 +112,12 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("integer");
 
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StateId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Trophy")
                         .HasColumnType("integer");
 
@@ -120,26 +126,6 @@ namespace TaskManagerApp.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Challenges");
-                });
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.ChallengesUsers", b =>
-                {
-                    b.Property<int>("ChallengeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StateId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ChallengeId", "UserId");
-
-                    b.HasIndex("StateId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ChallengesUsers");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.Rank", b =>
@@ -174,6 +160,10 @@ namespace TaskManagerApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("States");
@@ -202,12 +192,13 @@ namespace TaskManagerApp.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
                     b.Property<int>("StateId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("StateId");
 
                     b.ToTable("TaskItems");
                 });
@@ -258,7 +249,8 @@ namespace TaskManagerApp.Migrations
 
                     b.Property<string>("UserCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -292,6 +284,27 @@ namespace TaskManagerApp.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("UserStats");
+                });
+
+            modelBuilder.Entity("TaskManagerApp.Data.Models.UsersChallenges", b =>
+                {
+                    b.Property<int>("ChallengeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StateId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ChallengeId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UsersChallenges");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersRelations", b =>
@@ -330,7 +343,7 @@ namespace TaskManagerApp.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TasksUsers");
+                    b.ToTable("UsersTasks");
                 });
 
             modelBuilder.Entity("CategoryTaskItem", b =>
@@ -389,44 +402,6 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("TaskManagerApp.Data.Models.ChallengesUsers", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.Challenge", "Challenge")
-                        .WithMany("ChallengesUsers")
-                        .HasForeignKey("ChallengeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", "User")
-                        .WithMany("UsersChallenges")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Challenge");
-
-                    b.Navigation("State");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("State");
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.TasksCategories", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.Category", "Category")
@@ -468,6 +443,25 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TaskManagerApp.Data.Models.UsersChallenges", b =>
+                {
+                    b.HasOne("TaskManagerApp.Data.Models.Challenge", "Challenge")
+                        .WithMany("UsersChallenges")
+                        .HasForeignKey("ChallengeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskManagerApp.Data.Models.User", "User")
+                        .WithMany("UsersChallenges")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Challenge");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersRelations", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.User", "Initiator")
@@ -496,7 +490,7 @@ namespace TaskManagerApp.Migrations
                         .IsRequired();
 
                     b.HasOne("TaskManagerApp.Data.Models.User", "User")
-                        .WithMany("TasksUsers")
+                        .WithMany("UsersTasks")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -513,7 +507,7 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.Challenge", b =>
                 {
-                    b.Navigation("ChallengesUsers");
+                    b.Navigation("UsersChallenges");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
@@ -532,9 +526,9 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Stats")
                         .IsRequired();
 
-                    b.Navigation("TasksUsers");
-
                     b.Navigation("UsersChallenges");
+
+                    b.Navigation("UsersTasks");
                 });
 #pragma warning restore 612, 618
         }

@@ -31,6 +31,8 @@ namespace TaskManagerApp.Data.Models
         public Rank Rank { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime LastActive {  get; set; } = DateTime.UtcNow.Date;
         [Required]
         [StringLength(8)]
         public string UserCode { get; set; }

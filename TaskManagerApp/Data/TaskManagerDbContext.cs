@@ -15,6 +15,16 @@ namespace TaskManagerApp.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<State>()
+       .Property(s => s.Type)
+       .HasConversion<string>();
+
+            modelBuilder.Entity<State>().HasData(
+            new State { Id = 1, Type = StateType.NotStarted },
+            new State { Id = 2, Type = StateType.InProgress },
+            new State { Id = 3, Type = StateType.Completed },
+            new State { Id = 4, Type = StateType.Overdue }
+        );
 
             //For USERS RELATIONS
             modelBuilder.Entity<UsersRelations>()

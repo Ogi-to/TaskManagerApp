@@ -12,10 +12,11 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public void AddTask(TaskItem item)
+        public TaskItem AddTask(TaskItem item)
         {
             _context.TaskItems.Add(item);
             _context.SaveChanges();
+            return item;
         }
 
         public void AssignToUser(TaskItem task, User user)
@@ -31,9 +32,9 @@ namespace TaskManagerApp.Repositories
             _context.SaveChanges();
         }
 
-        public TaskItem Get(TaskItem item)
+        public TaskItem Get(int id)
         {
-            return _context.TaskItems.Where(t => t.Id == item.Id).Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).FirstOrDefault();
+            return _context.TaskItems.Where(t => t.Id == id).Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).FirstOrDefault();
         }
 
         public List<TaskItem> GetAll()

@@ -9,6 +9,7 @@ namespace TaskManagerApp.Repositories
     public class UserRepository : IUserRepository
     {
         private TaskManagerDbContext _context;
+
         public UserRepository(TaskManagerDbContext context)
         {
             _context = context;
@@ -27,9 +28,16 @@ namespace TaskManagerApp.Repositories
             return _context.Users.OrderBy(u => u.Id).ToList();
         }
 
-        public User Get(User item)
+        public void DeleteAccount(int id)
         {
-            return _context.Users.Where(u => u.Id == item.Id).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            User userToDelete = _context.Users.Where(u => u.Id == id).FirstOrDefault();
+            _context.Users.Remove(userToDelete);
+            _context.SaveChanges();
+        }
+
+        public User Get(int id)
+        {
+            return _context.Users.Where(u => u.Id == id).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
         }
         public User GetByEmail(string email)
         {
