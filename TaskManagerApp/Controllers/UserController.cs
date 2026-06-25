@@ -26,7 +26,7 @@ namespace TaskManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (_userRepository.Get(user.Id) != null)
+            if (_userRepository.GetAsync(user.Id) != null)
             {
                 return Conflict("User with the same username or email already exists.");
             }
@@ -53,7 +53,7 @@ namespace TaskManagerApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = _userRepository.Get(id);
+            var user = _userRepository.GetAsync(id);
             if (user == null)
             {
                 return NotFound();
@@ -134,7 +134,7 @@ namespace TaskManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (_userRepository.Get(user.Id) == null)
+            if (_userRepository.GetAsync(user.Id) == null)
             {
                 return NotFound();
             }
@@ -149,7 +149,7 @@ namespace TaskManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (_userRepository.Get(user.Id) == null)
+            if (_userRepository.GetAsync(user.Id) == null)
             {
                 return NotFound();
             }
@@ -207,14 +207,14 @@ namespace TaskManagerApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = _userRepository.Get(item.Id);
+            var user = _userRepository.GetAsync(item.Id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            var friends = _userRepository.GetFriendsList(user);
+            var friends = _userRepository.GetFriendsList(item).ToList();
 
             return Ok(friends);
         }

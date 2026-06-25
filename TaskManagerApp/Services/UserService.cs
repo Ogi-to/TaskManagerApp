@@ -1,4 +1,6 @@
 ﻿using TaskManagerApp.DTOS;
+using TaskManagerApp.Exceptions;
+using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -6,15 +8,20 @@ namespace TaskManagerApp.Services
 {
     public class UserService : IUserService
     {
-        private readonly UserRepository _userRepository;
+        private readonly IUserRepository _userRepository;
 
-        public UserService(UserRepository userRepository)
+        public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
         }
-        public UserDto GetUserById(int id)
+        public async Task<UserDto> GetUserById(int id)
         {
-            var user = _userRepository.Get(id);
+            var user = await _userRepository.GetAsync(id);
+
+            if (user == null)
+            {
+                throw new UserNotFoundException(id);
+            }
 
             return new UserDto
             {
@@ -31,12 +38,14 @@ namespace TaskManagerApp.Services
 
         }
 
-        public void LogInUser(LoginUserDto loginUserDto)
+
+
+        Task IUserService.LogInUser(LoginUserDto loginUserDto)
         {
             throw new NotImplementedException();
         }
 
-        public void RegisterUser(RegisterUserDto registerUserDto)
+        Task IUserService.RegisterUser(RegisterUserDto registerUserDto)
         {
             throw new NotImplementedException();
         }

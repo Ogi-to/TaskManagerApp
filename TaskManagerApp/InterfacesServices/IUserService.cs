@@ -5,9 +5,9 @@ namespace TaskManagerApp.InterfacesServices
 {
     public interface IUserService
     {
-        public void RegisterUser(RegisterUserDto registerUserDto);
-        public void LogInUser(LoginUserDto loginUserDto);
-        public UserDto GetUserById(int id);
+        public Task RegisterUser(RegisterUserDto registerUserDto);
+        public Task LogInUser(LoginUserDto loginUserDto);
+        public Task<UserDto> GetUserById(int id);
 
     }
 }

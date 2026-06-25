@@ -55,6 +55,7 @@ namespace TaskManagerApp
 
             app.UseHttpsRedirection();
 
+            app.UseExceptionMiddleware();
 
             app.UseAuthorization();
 

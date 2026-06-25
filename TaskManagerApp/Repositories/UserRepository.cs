@@ -35,9 +35,9 @@ namespace TaskManagerApp.Repositories
             _context.SaveChanges();
         }
 
-        public User Get(int id)
+        public async Task<User?> GetAsync(int id)
         {
-            return _context.Users.Where(u => u.Id == id).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
         public User GetByEmail(string email)
         {
