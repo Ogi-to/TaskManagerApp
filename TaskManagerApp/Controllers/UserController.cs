@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
@@ -45,20 +46,15 @@ namespace TaskManagerApp.Controllers
 
 
         [HttpGet("{id}")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var user = await _userRepository.GetAsync(id);
 
-            var user = _userRepository.GetAsync(id);
             if (user == null)
             {
-                return NotFound();
+                throw new UserNotFoundException(id);
             }
-            
 
             return Ok(user);
         }

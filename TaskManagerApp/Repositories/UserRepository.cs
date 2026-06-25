@@ -37,7 +37,15 @@ namespace TaskManagerApp.Repositories
 
         public async Task<User?> GetAsync(int id)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            return await _context.Users
+            .Include(u => u.Rank)
+            .Include(u => u.Tasks)
+            .Include(u => u.Challenges)
+            .Include(u => u.UsersTasks)
+            .Include(u => u.UsersChallenges)
+            .Include(u => u.SentRelations)
+            .Include(u => u.ReceivedRelations)
+            .FirstOrDefaultAsync(u => u.Id == id);
         }
         public User GetByEmail(string email)
         {

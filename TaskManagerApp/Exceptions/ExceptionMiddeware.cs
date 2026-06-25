@@ -55,7 +55,7 @@
             }
             catch (Exception ex)
             {
-                await HandleError(context, 500, "Internal server error.");
+                await HandleError(context, 500, ex.Message);
             }
         }
     }
