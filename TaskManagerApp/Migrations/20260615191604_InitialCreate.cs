@@ -45,11 +45,30 @@ namespace TaskManagerApp.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Type = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_States", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TaskItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    StateId = table.Column<int>(type: "integer", nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TaskItems", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -63,7 +82,9 @@ namespace TaskManagerApp.Migrations
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
                     Trophy = table.Column<int>(type: "integer", nullable: true),
                     Points = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false)
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    StateId = table.Column<int>(type: "integer", nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -89,7 +110,7 @@ namespace TaskManagerApp.Migrations
                     Points = table.Column<int>(type: "integer", nullable: false),
                     RankId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UserCode = table.Column<string>(type: "text", nullable: false)
+                    UserCode = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -103,55 +124,49 @@ namespace TaskManagerApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TaskItems",
+                name: "CategoryTaskItem",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    StateId = table.Column<int>(type: "integer", nullable: false)
+                    CategoriesId = table.Column<int>(type: "integer", nullable: false),
+                    TasksId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TaskItems", x => x.Id);
+                    table.PrimaryKey("PK_CategoryTaskItem", x => new { x.CategoriesId, x.TasksId });
                     table.ForeignKey(
-                        name: "FK_TaskItems_States_StateId",
-                        column: x => x.StateId,
-                        principalTable: "States",
+                        name: "FK_CategoryTaskItem_Categories_CategoriesId",
+                        column: x => x.CategoriesId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CategoryTaskItem_TaskItems_TasksId",
+                        column: x => x.TasksId,
+                        principalTable: "TaskItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChallengesUsers",
+                name: "TasksCategories",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "integer", nullable: false),
-                    ChallengeId = table.Column<int>(type: "integer", nullable: false),
-                    StateId = table.Column<int>(type: "integer", nullable: false)
+                    TaskId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChallengesUsers", x => new { x.ChallengeId, x.UserId });
+                    table.PrimaryKey("PK_TasksCategories", x => new { x.TaskId, x.CategoryId });
                     table.ForeignKey(
-                        name: "FK_ChallengesUsers_Challenges_ChallengeId",
-                        column: x => x.ChallengeId,
-                        principalTable: "Challenges",
+                        name: "FK_TasksCategories_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ChallengesUsers_States_StateId",
-                        column: x => x.StateId,
-                        principalTable: "States",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ChallengesUsers_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
+                        name: "FK_TasksCategories_TaskItems_TaskId",
+                        column: x => x.TaskId,
+                        principalTable: "TaskItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -178,6 +193,56 @@ namespace TaskManagerApp.Migrations
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TaskItemUser",
+                columns: table => new
+                {
+                    TasksId = table.Column<int>(type: "integer", nullable: false),
+                    UsersId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TaskItemUser", x => new { x.TasksId, x.UsersId });
+                    table.ForeignKey(
+                        name: "FK_TaskItemUser_TaskItems_TasksId",
+                        column: x => x.TasksId,
+                        principalTable: "TaskItems",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TaskItemUser_Users_UsersId",
+                        column: x => x.UsersId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UsersChallenges",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    ChallengeId = table.Column<int>(type: "integer", nullable: false),
+                    StateId = table.Column<int>(type: "integer", nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsersChallenges", x => new { x.ChallengeId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_UsersChallenges_Challenges_ChallengeId",
+                        column: x => x.ChallengeId,
+                        principalTable: "Challenges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_UsersChallenges_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -208,6 +273,30 @@ namespace TaskManagerApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UsersTasks",
+                columns: table => new
+                {
+                    TaskId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsersTasks", x => new { x.TaskId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_UsersTasks_TaskItems_TaskId",
+                        column: x => x.TaskId,
+                        principalTable: "TaskItems",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_UsersTasks_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserStats",
                 columns: table => new
                 {
@@ -228,102 +317,6 @@ namespace TaskManagerApp.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "CategoryTaskItem",
-                columns: table => new
-                {
-                    CategoriesId = table.Column<int>(type: "integer", nullable: false),
-                    TasksId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CategoryTaskItem", x => new { x.CategoriesId, x.TasksId });
-                    table.ForeignKey(
-                        name: "FK_CategoryTaskItem_Categories_CategoriesId",
-                        column: x => x.CategoriesId,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CategoryTaskItem_TaskItems_TasksId",
-                        column: x => x.TasksId,
-                        principalTable: "TaskItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TaskItemUser",
-                columns: table => new
-                {
-                    TasksId = table.Column<int>(type: "integer", nullable: false),
-                    UsersId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TaskItemUser", x => new { x.TasksId, x.UsersId });
-                    table.ForeignKey(
-                        name: "FK_TaskItemUser_TaskItems_TasksId",
-                        column: x => x.TasksId,
-                        principalTable: "TaskItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TaskItemUser_Users_UsersId",
-                        column: x => x.UsersId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TasksCategories",
-                columns: table => new
-                {
-                    TaskId = table.Column<int>(type: "integer", nullable: false),
-                    CategoryId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TasksCategories", x => new { x.TaskId, x.CategoryId });
-                    table.ForeignKey(
-                        name: "FK_TasksCategories_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_TasksCategories_TaskItems_TaskId",
-                        column: x => x.TaskId,
-                        principalTable: "TaskItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TasksUsers",
-                columns: table => new
-                {
-                    TaskId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TasksUsers", x => new { x.TaskId, x.UserId });
-                    table.ForeignKey(
-                        name: "FK_TasksUsers_TaskItems_TaskId",
-                        column: x => x.TaskId,
-                        principalTable: "TaskItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_TasksUsers_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_CategoryTaskItem_TasksId",
                 table: "CategoryTaskItem",
@@ -335,24 +328,9 @@ namespace TaskManagerApp.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChallengesUsers_StateId",
-                table: "ChallengesUsers",
-                column: "StateId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ChallengesUsers_UserId",
-                table: "ChallengesUsers",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ChallengeUser_UsersId",
                 table: "ChallengeUser",
                 column: "UsersId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TaskItems_StateId",
-                table: "TaskItems",
-                column: "StateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TaskItemUser_UsersId",
@@ -365,19 +343,24 @@ namespace TaskManagerApp.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TasksUsers_UserId",
-                table: "TasksUsers",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Users_RankId",
                 table: "Users",
                 column: "RankId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UsersChallenges_UserId",
+                table: "UsersChallenges",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UsersRelations_RelatedUserId",
                 table: "UsersRelations",
                 column: "RelatedUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UsersTasks_UserId",
+                table: "UsersTasks",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -387,10 +370,10 @@ namespace TaskManagerApp.Migrations
                 name: "CategoryTaskItem");
 
             migrationBuilder.DropTable(
-                name: "ChallengesUsers");
+                name: "ChallengeUser");
 
             migrationBuilder.DropTable(
-                name: "ChallengeUser");
+                name: "States");
 
             migrationBuilder.DropTable(
                 name: "TaskItemUser");
@@ -399,10 +382,13 @@ namespace TaskManagerApp.Migrations
                 name: "TasksCategories");
 
             migrationBuilder.DropTable(
-                name: "TasksUsers");
+                name: "UsersChallenges");
 
             migrationBuilder.DropTable(
                 name: "UsersRelations");
+
+            migrationBuilder.DropTable(
+                name: "UsersTasks");
 
             migrationBuilder.DropTable(
                 name: "UserStats");
@@ -418,9 +404,6 @@ namespace TaskManagerApp.Migrations
 
             migrationBuilder.DropTable(
                 name: "Categories");
-
-            migrationBuilder.DropTable(
-                name: "States");
 
             migrationBuilder.DropTable(
                 name: "Ranks");

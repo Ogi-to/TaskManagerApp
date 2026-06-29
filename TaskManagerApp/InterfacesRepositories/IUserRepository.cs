@@ -4,14 +4,15 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IUserRepository
     {
-        public User Get(User item);
+        public Task<User?> GetAsync(int id);
 
         public List<User> GetAllUsers();
         public User GetByEmail(string email);
         public User GetByUsername(string username);
         public User GetByUserCode(string userCode);
+        public UsersRelations GetRelation(int initiatorId, int relatedUserId);
 
-        public void CreateAccount(User item);
+        public User CreateAccount(User item);
 
         public void UpdateAccountInfo(User item);
 
@@ -19,7 +20,7 @@ namespace TaskManagerApp.Interfaces
 
         public void SendRequest(UsersRelations relation);
 
-        public void RespondToRequest(UsersRelations relation);
+        public bool RespondToRequest(UsersRelations relation);
 
         public List<User> GetFriendsList(User item);
 

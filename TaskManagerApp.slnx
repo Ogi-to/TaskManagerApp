@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="Blazor/Blazor.Client/Blazor.Client.csproj" Id="3f5cfac4-50f3-4dab-8b4b-5e1e66898ee8" />
+  <Project Path="Blazor/Blazor/Blazor.csproj" Id="2684894b-4c01-4be8-a382-0e0cd19c6e09" />
   <Project Path="TaskManagerApp/TaskManagerApp.csproj" />
 </Solution>

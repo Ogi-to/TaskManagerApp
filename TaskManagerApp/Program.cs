@@ -11,16 +11,19 @@ namespace TaskManagerApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
-<<<<<<< Updated upstream
             // DbContext
             builder.Services.AddDbContext<TaskManagerDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-=======
->>>>>>> Stashed changes
             // Controllers
             builder.Services.AddControllers();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
+            builder.Services.AddScoped<ITaskItemRepository, TaskItemRepository>();
+            builder.Services.AddScoped<IStateRepository, StateRepository>();
+            builder.Services.AddScoped<IRankRepository, RankRepository>();
+            builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
+            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             // Swagger
             builder.Services.AddEndpointsApiExplorer();
@@ -43,11 +46,7 @@ namespace TaskManagerApp
 
             var app = builder.Build();
 
-<<<<<<< Updated upstream
-            // Swagger UI
-=======
-            // Swagger
->>>>>>> Stashed changes
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -55,17 +54,17 @@ namespace TaskManagerApp
             }
 
             app.UseHttpsRedirection();
-<<<<<<< Updated upstream
+
+            app.UseExceptionMiddleware();
 
             app.UseAuthorization();
-=======
 
             app.UseCors("AllowAll");
 
             app.UseAuthorization();
 
             app.MapGet("/", () => "Task Manager API Running");
->>>>>>> Stashed changes
+
 
             app.MapControllers();
 
