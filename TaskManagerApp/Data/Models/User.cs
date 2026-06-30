@@ -18,10 +18,11 @@ namespace TaskManagerApp.Data.Models
         [Required]
         [StringLength(100, MinimumLength = 3)]
         public string Email { get; set; }
+        public bool IsEmailVerified { get; set; } = false;
 
         [Required]
         [MinLength(8)]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = string.Empty;
 
         public int Streak { get; set; } = 0;
 

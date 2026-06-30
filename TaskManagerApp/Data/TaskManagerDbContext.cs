@@ -112,8 +112,7 @@ namespace TaskManagerApp.Data
         public DbSet<UsersRelations> UsersRelations { get; set; }
         public DbSet<UserStats> UserStats { get; set; }
         public DbSet<State> States { get; set; }
-
-
+        public DbSet<EmailCode> EmailCodes { get; set; }
     }
 }
 

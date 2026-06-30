@@ -6,13 +6,13 @@ namespace TaskManagerApp.Interfaces
     {
         public Task<User?> GetAsync(int id);
 
-        public List<User> GetAllUsers();
-        public User GetByEmail(string email);
-        public User GetByUsername(string username);
-        public User GetByUserCode(string userCode);
-        public UsersRelations GetRelation(int initiatorId, int relatedUserId);
+        public Task<List<User>> GetAllUsers();
+        public Task<User?> GetByEmail(string email);
+        public Task<User?> GetByUsername(string username);
+        public Task<User?> GetByUserCode(string userCode);
+        public Task<UsersRelations> GetRelation(int initiatorId, int relatedUserId);
 
-        public User CreateAccount(User item);
+        public Task<User> CreateAccount(User item);
 
         public void UpdateAccountInfo(User item);
 

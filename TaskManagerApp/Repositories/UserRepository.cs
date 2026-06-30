@@ -16,23 +16,23 @@ namespace TaskManagerApp.Repositories
         }
 
 
-        public User CreateAccount(User item)
+        public async Task<User> CreateAccount(User item)
         {
             _context.Users.Add(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return item;
         }
 
-        public List<User> GetAllUsers()
+        public async Task<List<User>> GetAllUsers()
         {
-            return _context.Users.OrderBy(u => u.Id).ToList();
+            return await _context.Users.OrderBy(u => u.Id).ToListAsync();
         }
 
-        public void DeleteAccount(int id)
+        public async Task DeleteAccount(int id)
         {
-            User userToDelete = _context.Users.Where(u => u.Id == id).FirstOrDefault();
+            User userToDelete = await _context.Users.Where(u => u.Id == id).FirstOrDefaultAsync();
             _context.Users.Remove(userToDelete);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
         public async Task<User?> GetAsync(int id)
@@ -47,22 +47,22 @@ namespace TaskManagerApp.Repositories
             .Include(u => u.ReceivedRelations)
             .FirstOrDefaultAsync(u => u.Id == id);
         }
-        public User GetByEmail(string email)
+        public async Task<User?> GetByEmail(string email)
         {
-            return _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return await _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefaultAsync();
         }
-        public User GetByUsername(string username)
+        public async Task<User?> GetByUsername(string username)
         {
-            return _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return await _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefaultAsync();
         }
-        public User GetByUserCode(string userCode)
+        public async Task<User?> GetByUserCode(string userCode)
         {
-            return _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return await _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefaultAsync();
         }
 
-        public UsersRelations GetRelation(int initiatorId, int relatedUserId)
+        public async Task<UsersRelations?> GetRelation(int initiatorId, int relatedUserId)
         {
-            return _context.UsersRelations.FirstOrDefault(r => r.InitiatorId == initiatorId && r.RelatedUserId == relatedUserId);
+            return await _context.UsersRelations.FirstOrDefaultAsync(r => r.InitiatorId == initiatorId && r.RelatedUserId == relatedUserId);
         }
 
 
@@ -111,6 +111,7 @@ namespace TaskManagerApp.Repositories
             userToModify.Username = item.Username;
             userToModify.Email = item.Email;
             userToModify.PasswordHash = item.PasswordHash;
+            userToModify.IsEmailVerified = item.IsEmailVerified;
             _context.SaveChanges();
         }
         public void UpdateUserInfo(User item)
