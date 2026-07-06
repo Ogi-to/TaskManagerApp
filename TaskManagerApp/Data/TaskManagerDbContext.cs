@@ -48,7 +48,7 @@ namespace TaskManagerApp.Data
 
             modelBuilder.Entity<UsersTasks>()
                 .HasOne(tu => tu.Task)
-                .WithMany(t => t.TasksUsers)
+                .WithMany(t => t.UsersTasks)
                 .HasForeignKey(tu => tu.TaskId)
                 .OnDelete(DeleteBehavior.Restrict);
 

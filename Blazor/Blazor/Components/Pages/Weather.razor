@@ -62,7 +62,7 @@ else
     {
         // Simulate asynchronous loading to demonstrate streaming rendering
         await Task.Delay(500);
-        users = await Http.GetFromJsonAsync<User[]>("api/User/getAll-users");
+        //users = await Http.GetFromJsonAsync<User[]>("api/User/getAll-users");
         var startDate = DateOnly.FromDateTime(DateTime.Now);
         var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
         forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast

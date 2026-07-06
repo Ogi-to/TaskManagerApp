@@ -12,40 +12,42 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public void CompleteChalenge(Challenge challenge, User user)
+        public async Task CompleteChalengeAsync(Challenge challenge, User user)
         {
-            Challenge challengeToComplete = _context.UsersChallenges.Where(uc => uc.ChallengeId == challenge.Id && uc.UserId == user.Id).Include(uc => uc.Challenge).FirstOrDefault().Challenge;
+            var userChallenge = await _context.UsersChallenges.Where(uc => uc.ChallengeId == challenge.Id && uc.UserId == user.Id).Include(uc => uc.Challenge).FirstOrDefaultAsync();
+            var challengeToComplete = userChallenge.Challenge;
             challengeToComplete.State = StateType.Completed;
             challengeToComplete.StateId = (int)StateType.Completed;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
-        
 
-        public Challenge Get(Challenge item)
+
+        public async Task<Challenge> GetAsync(Challenge item)
         {
-            return _context.Challenges.Where(c => c.Id == item.Id).FirstOrDefault();
+            return await _context.Challenges.Where(c => c.Id == item.Id).FirstOrDefaultAsync();
         }
 
-        public List<Challenge> GetAll()
+        public async Task<List<Challenge>> GetAllAsync()
         {
-            return _context.Challenges.Include(c => c.Users).ToList();
+            return await _context.Challenges.Include(c => c.UsersChallenges).ThenInclude(uc => uc.User).ToListAsync();
         }
 
-        public List<Challenge> GetChallengesByUser(User item)
+        public async Task<List<Challenge>> GetChallengesByUserAsync(User item)
         {
-           return _context.UsersChallenges.Where(uc => uc.UserId == item.Id).Select(uc => uc.Challenge).ToList();
+            return await _context.UsersChallenges.Where(uc => uc.UserId == item.Id).Select(uc => uc.Challenge).ToListAsync();
         }
 
-        public void JoinChallenge(Challenge challenge, User user)
-        { 
-            UsersChallenges userChallenge = new UsersChallenges 
-            {   UserId = user.Id, 
-                ChallengeId = challenge.Id, 
-                StateId = (int)StateType.InProgress, 
-                State = StateType.InProgress 
+        public async Task JoinChallengeAsync(Challenge challenge, User user)
+        {
+            UsersChallenges userChallenge = new UsersChallenges
+            {
+                UserId = user.Id,
+                ChallengeId = challenge.Id,
+                StateId = (int)StateType.InProgress,
+                State = StateType.InProgress
             };
-            _context.UsersChallenges.Add(userChallenge);
-            _context.SaveChanges();
+            await _context.UsersChallenges.AddAsync(userChallenge);
+            await _context.SaveChangesAsync();
         }
     }
 }

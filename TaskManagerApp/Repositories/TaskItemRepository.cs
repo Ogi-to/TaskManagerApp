@@ -12,49 +12,80 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public TaskItem AddTask(TaskItem item)
+        public async Task AddTaskAsync(TaskItem item)
         {
             _context.TaskItems.Add(item);
-            _context.SaveChanges();
-            return item;
+            await _context.SaveChangesAsync();
+            
         }
 
-        public void AssignToUser(TaskItem task, User user)
+        public async Task AssignToUserAsync(TaskItem task, User user)
         {
-            TaskItem taskToModify = _context.TaskItems.Where(t => t.Id == task.Id).FirstOrDefault();
-            taskToModify.Users.Add(user);
-            _context.SaveChanges();
+            var taskToModify = await _context.TaskItems.Include(t => t.UsersTasks).FirstOrDefaultAsync(t => t.Id == task.Id);
+
+            taskToModify.UsersTasks.Add(new UsersTasks
+            {
+                UserId = user.Id,
+                TaskId = taskToModify.Id
+            });
+
+            await _context.SaveChangesAsync();
         }
 
-        public void Delete(TaskItem item)
+        public async Task DeleteAsync(TaskItem item)
         {
             _context.TaskItems.Remove(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public TaskItem Get(int id)
+        public async Task<TaskItem> GetAsync(int id)
         {
-            return _context.TaskItems.Where(t => t.Id == id).Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).FirstOrDefault();
+            return await _context.TaskItems
+                   .Include(t => t.State)
+                   .Include(t => t.TasksCategories)
+                       .ThenInclude(tc => tc.Category)
+                   .Include(t => t.UsersTasks)
+                       .ThenInclude(ut => ut.User)
+                   .FirstOrDefaultAsync(t => t.Id == id);
         }
 
-        public List<TaskItem> GetAll()
+        //public async Task<List<TaskItem>> GetAllAsync()
+        //{
+        //    return await _context.TaskItems.Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).OrderBy(t => t.EndDate).ToListAsync();
+        //}
+        public async Task<List<TaskItem>> GetAllByUserAsync(int userId)
         {
-            return _context.TaskItems.Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).OrderBy(t => t.EndDate).ToList();
+
+            return await _context.TaskItems
+                    .Where(t => t.UsersTasks.Any(ut => ut.UserId == userId))
+                    .Include(t => t.State)
+                    .Include(t => t.TasksCategories)
+                        .ThenInclude(tc => tc.Category)
+                    .Include(t => t.UsersTasks)
+                        .ThenInclude(ut => ut.User)
+                    .OrderBy(t => t.EndDate)
+                    .ToListAsync();
         }
 
-        public void Update(TaskItem item)
+
+        public async Task UpdateAsync(TaskItem item)
         {
-            TaskItem taskToModify = _context.TaskItems.Where(t => t.Id == item.Id).FirstOrDefault();
+            var taskToModify = await _context.TaskItems
+            .FirstOrDefaultAsync(t => t.Id == item.Id);
+
+            if (taskToModify == null)
+            {
+                return;
+            }
+             
+
             taskToModify.Name = item.Name;
             taskToModify.Description = item.Description;
             taskToModify.StateId = item.StateId;
-            taskToModify.State = item.State;
-            taskToModify.Categories = item.Categories;
-            taskToModify.Users = item.Users;
             taskToModify.StartDate = item.StartDate;
             taskToModify.EndDate = item.EndDate;
-            _context.SaveChanges();
-        }
 
+            await _context.SaveChangesAsync();
+        }
     }
 }

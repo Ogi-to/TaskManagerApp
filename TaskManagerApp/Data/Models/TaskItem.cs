@@ -24,11 +24,9 @@ namespace TaskManagerApp.Data.Models
         public int StateId { get; set; }
         public StateType State { get; set; }
 
-        public List<Category> Categories { get; set; } = new List<Category>();
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
 
-        public List<User> Users { get; set; } = new List<User>();
-        public List<UsersTasks> TasksUsers { get; set; } = new List<UsersTasks>();
+        public List<UsersTasks> UsersTasks { get; set; } = new List<UsersTasks>();
     }
 }
  

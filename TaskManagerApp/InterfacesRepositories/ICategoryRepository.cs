@@ -4,8 +4,8 @@ namespace TaskManagerApp.Interfaces
 {
     public interface ICategoryRepository
     {
-        public Category Get(Category item);
-        public List<Category> GetAll();
+        public Task<Category> GetAsync(Category item);
+        public Task<List<Category>> GetAllAsync();
 
     }
 }

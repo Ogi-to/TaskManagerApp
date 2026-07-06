@@ -4,17 +4,18 @@ namespace TaskManagerApp.Interfaces
 {
     public interface ITaskItemRepository
     {
-   
-        public TaskItem Get(int id);
 
-        public void Update(TaskItem item);
+        public Task<TaskItem> GetAsync(int id);
 
-        public void Delete(TaskItem item);
+        public Task UpdateAsync(TaskItem item);
 
-        public TaskItem AddTask(TaskItem item);
+        public Task DeleteAsync(TaskItem item);
 
-        public void AssignToUser(TaskItem task , User user);
+        public Task AddTaskAsync(TaskItem item);
 
-        public List<TaskItem> GetAll();
+        public Task AssignToUserAsync(TaskItem task, User user);
+
+        //public Task<List<TaskItem>> GetAllAsync();
+        public Task<List<TaskItem>> GetAllByUserAsync(int userId);
     }
 }

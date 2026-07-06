@@ -48,12 +48,12 @@ namespace TaskManagerApp.Services
 
         public async Task RegisterUser(RegisterUserDto registerUserDto)
         {
-            var testUser = await _userRepository.GetByUsername(registerUserDto.Username);
+            var testUser = _userRepository.GetByUsername(registerUserDto.Username);
             if (testUser != null)
             {
                 throw new UserNameAlreadyExistsException();
             }
-            testUser = await _userRepository.GetByEmail(registerUserDto.Email);
+            testUser = _userRepository.GetByEmail(registerUserDto.Email);
             if (testUser != null)
             {
                 throw new UserEmailAlreadyExistsException();
@@ -64,18 +64,22 @@ namespace TaskManagerApp.Services
                 Username = registerUserDto.Username,
                 Email = registerUserDto.Email,
                 PasswordHash = _hashPasswordService.HashPassword(registerUserDto.Password),
+                UserCode = Random.Shared.Next(10000000, 99999999).ToString(),
+                RankId = registerUserDto.RankId,
                 IsEmailVerified = false
 
             };
 
-            await _userRepository.CreateAccount(user);
+            Console.WriteLine("Before saving user");
+            _userRepository.CreateAccount(user);
+            Console.WriteLine("After saving user");
 
             await _emailCodeService.SendVerificationCode(user.Email);
         }
 
         public async Task<UserDto> LogInUser(LoginUserDto loginUserDto)
         {
-            var testUser = await _userRepository.GetByEmail(loginUserDto.Email);
+            var testUser = _userRepository.GetByEmail(loginUserDto.Email);
             if (testUser == null)
             {
                 throw new EmailorPasswordNotFoundException();
@@ -116,7 +120,7 @@ namespace TaskManagerApp.Services
             {
                 throw new InvalidVerificationCodeException();
             }
-            var user = await _userRepository.GetByEmail(email);
+            var user = _userRepository.GetByEmail(email);
             if (user == null)
             {
                 throw new EmailorPasswordNotFoundException();

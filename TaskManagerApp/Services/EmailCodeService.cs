@@ -9,11 +9,9 @@ namespace TaskManagerApp.Services
     public class EmailCodeService : IEmailCodeService
     {
         readonly IEmailCodeRepository _emailCodeRepository;
-        readonly IEmailCodeService _emailCodeService;
-        public EmailCodeService(IEmailCodeRepository emailCodeRepository, IEmailCodeService emailCodeService)
+        public EmailCodeService(IEmailCodeRepository emailCodeRepository)
         {
             _emailCodeRepository = emailCodeRepository;
-            _emailCodeService = emailCodeService;
         }
 
         public async Task<bool> VerifyEmail(string email, string code)

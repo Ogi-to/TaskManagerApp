@@ -4,14 +4,14 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IChallengeRepository
     {
-        public Challenge Get(Challenge item);
-        public List<Challenge> GetAll();
-        public List<Challenge> GetChallengesByUser(User item);
+        public Task<Challenge> GetAsync(Challenge item);
+        public Task<List<Challenge>> GetAllAsync();
+        public Task<List<Challenge>> GetChallengesByUserAsync(User item);
 
-        public void JoinChallenge(Challenge challenge, User user);
+        public Task JoinChallengeAsync(Challenge challenge, User user);
 
-        public void CompleteChalenge(Challenge challenge, User user);
-        
+        public Task CompleteChalengeAsync(Challenge challenge, User user);
+
 
     }
 }

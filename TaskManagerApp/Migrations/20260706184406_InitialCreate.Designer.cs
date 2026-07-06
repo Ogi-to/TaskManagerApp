@@ -12,8 +12,8 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    [Migration("20260615191841_Create")]
-    partial class Create
+    [Migration("20260706184406_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,51 +24,6 @@ namespace TaskManagerApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("CategoryTaskItem", b =>
-                {
-                    b.Property<int>("CategoriesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TasksId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CategoriesId", "TasksId");
-
-                    b.HasIndex("TasksId");
-
-                    b.ToTable("CategoryTaskItem");
-                });
-
-            modelBuilder.Entity("ChallengeUser", b =>
-                {
-                    b.Property<int>("ChallengesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ChallengesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("ChallengeUser");
-                });
-
-            modelBuilder.Entity("TaskItemUser", b =>
-                {
-                    b.Property<int>("TasksId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("TasksId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("TaskItemUser");
-                });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.Category", b =>
                 {
@@ -128,6 +83,33 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("Challenges");
                 });
 
+            modelBuilder.Entity("TaskManagerApp.Data.Models.EmailCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpirationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailCodes");
+                });
+
             modelBuilder.Entity("TaskManagerApp.Data.Models.Rank", b =>
                 {
                     b.Property<int>("Id")
@@ -167,6 +149,28 @@ namespace TaskManagerApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("States");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Type = "NotStarted"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Type = "InProgress"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Type = "Completed"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Type = "Overdue"
+                        });
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
@@ -233,6 +237,12 @@ namespace TaskManagerApp.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastActive")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -346,51 +356,6 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("UsersTasks");
                 });
 
-            modelBuilder.Entity("CategoryTaskItem", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CategoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.TaskItem", null)
-                        .WithMany()
-                        .HasForeignKey("TasksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ChallengeUser", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.Challenge", null)
-                        .WithMany()
-                        .HasForeignKey("ChallengesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("TaskItemUser", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.TaskItem", null)
-                        .WithMany()
-                        .HasForeignKey("TasksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.Challenge", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.Category", "Category")
@@ -484,7 +449,7 @@ namespace TaskManagerApp.Migrations
             modelBuilder.Entity("TaskManagerApp.Data.Models.UsersTasks", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.TaskItem", "Task")
-                        .WithMany("TasksUsers")
+                        .WithMany("UsersTasks")
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -514,7 +479,7 @@ namespace TaskManagerApp.Migrations
                 {
                     b.Navigation("TasksCategories");
 
-                    b.Navigation("TasksUsers");
+                    b.Navigation("UsersTasks");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>

@@ -28,7 +28,6 @@ namespace TaskManagerApp.Data.Models
         [Required]
         public string Description { get; set; }
 
-        public List<User> Users { get; set; } = new List<User>();
 
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 

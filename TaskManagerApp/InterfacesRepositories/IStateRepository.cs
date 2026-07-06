@@ -4,8 +4,8 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IStateRepository
     {
-        public State Get(State item);
+        public Task<State> GetAsync(State item);
 
-        public List<State> GetAll();
+        public Task<List<State>> GetAllAsync();
     }
 }
