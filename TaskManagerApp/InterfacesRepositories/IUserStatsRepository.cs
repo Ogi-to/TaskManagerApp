@@ -4,9 +4,9 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IUserStatsRepository
     {
-        public UserStats Get(UserStats item);
+        public Task<UserStats> GetAsync(int userId);
 
-        public void Update(UserStats item);
+        public Task UpdateAsync(UserStats item);
 
 
     }

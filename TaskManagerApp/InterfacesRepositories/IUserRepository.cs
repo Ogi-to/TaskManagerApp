@@ -24,6 +24,8 @@ namespace TaskManagerApp.Interfaces
 
         public List<User> GetFriendsList(User item);
 
-        
+
+
+
     }
 }

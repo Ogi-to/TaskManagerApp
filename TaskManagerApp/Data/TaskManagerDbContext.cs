@@ -48,7 +48,7 @@ namespace TaskManagerApp.Data
 
             modelBuilder.Entity<UsersTasks>()
                 .HasOne(tu => tu.Task)
-                .WithMany(t => t.TasksUsers)
+                .WithMany(t => t.UsersTasks)
                 .HasForeignKey(tu => tu.TaskId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -112,8 +112,7 @@ namespace TaskManagerApp.Data
         public DbSet<UsersRelations> UsersRelations { get; set; }
         public DbSet<UserStats> UserStats { get; set; }
         public DbSet<State> States { get; set; }
-
-
+        public DbSet<EmailCode> EmailCodes { get; set; }
     }
 }
 

@@ -1,6 +1,8 @@
-﻿using TaskManagerApp.DTOS;
+﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
+using TaskManagerApp.InterfacesRepositories;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -9,10 +11,16 @@ namespace TaskManagerApp.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IEmailCodeRepository _emailCodeRepository;
+        private readonly IEmailCodeService _emailCodeService;
+        private readonly HashPasswordService _hashPasswordService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IEmailCodeRepository emailCodeRepository , IEmailCodeService emailCodeService, HashPasswordService hashPasswordService)
         {
             _userRepository = userRepository;
+            _emailCodeRepository = emailCodeRepository;
+            _emailCodeService = emailCodeService;
+            _hashPasswordService = hashPasswordService;
         }
         public async Task<UserDto> GetUserById(int id)
         {
@@ -38,16 +46,88 @@ namespace TaskManagerApp.Services
 
         }
 
-
-
-        Task IUserService.LogInUser(LoginUserDto loginUserDto)
+        public async Task RegisterUser(RegisterUserDto registerUserDto)
         {
-            throw new NotImplementedException();
+            var testUser = _userRepository.GetByUsername(registerUserDto.Username);
+            if (testUser != null)
+            {
+                throw new UserNameAlreadyExistsException();
+            }
+            testUser = _userRepository.GetByEmail(registerUserDto.Email);
+            if (testUser != null)
+            {
+                throw new UserEmailAlreadyExistsException();
+            }
+
+            var user = new User
+            {
+                Username = registerUserDto.Username,
+                Email = registerUserDto.Email,
+                PasswordHash = _hashPasswordService.HashPassword(registerUserDto.Password),
+                UserCode = Random.Shared.Next(10000000, 99999999).ToString(),
+                RankId = registerUserDto.RankId,
+                IsEmailVerified = false
+
+            };
+
+            Console.WriteLine("Before saving user");
+            _userRepository.CreateAccount(user);
+            Console.WriteLine("After saving user");
+
+            await _emailCodeService.SendVerificationCode(user.Email);
         }
 
-        Task IUserService.RegisterUser(RegisterUserDto registerUserDto)
+        public async Task<UserDto> LogInUser(LoginUserDto loginUserDto)
         {
-            throw new NotImplementedException();
+            var testUser = _userRepository.GetByEmail(loginUserDto.Email);
+            if (testUser == null)
+            {
+                throw new EmailorPasswordNotFoundException();
+            }
+
+            if (testUser.IsEmailVerified == false)
+            {
+                throw new EmailNotVerifiedException();
+            }
+
+            var isPasswordValid = _hashPasswordService.VerifyPassword(loginUserDto.Password, testUser.PasswordHash);
+
+            if (isPasswordValid == false)
+            {
+                throw new EmailorPasswordNotFoundException();
+            }
+
+            return new UserDto
+            {
+                Id = testUser.Id,
+                Username = testUser.Username,
+                Email = testUser.Email,
+                Streak = testUser.Streak,
+                Points = testUser.Points,
+                RankId = testUser.RankId,
+                CreatedAt = testUser.CreatedAt,
+                LastActive = testUser.LastActive,
+                UserCode = testUser.UserCode
+            };
+        }
+
+        
+
+        public async Task<bool> VerifyEmail(string email, string code)
+        {
+            var isVerified = await _emailCodeService.VerifyEmail(email, code);
+            if (!isVerified)
+            {
+                throw new InvalidVerificationCodeException();
+            }
+            var user = _userRepository.GetByEmail(email);
+            if (user == null)
+            {
+                throw new EmailorPasswordNotFoundException();
+            }
+            user.IsEmailVerified = true;
+            _userRepository.UpdateAccountInfo(user);
+            return true;
         }
     }
 }

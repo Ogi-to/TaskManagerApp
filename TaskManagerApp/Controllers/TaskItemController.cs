@@ -28,7 +28,7 @@ namespace TaskManagerApp.Controllers
             }
 
             
-            var addedTaskItem = _taskItemRepository.AddTask(taskItem);
+            var addedTaskItem = _taskItemRepository.AddTaskAsync(taskItem);
             if (addedTaskItem == null) {
                 return BadRequest("Failed to add task item.");
             }
@@ -43,7 +43,7 @@ namespace TaskManagerApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var taskItem = _taskItemRepository.Get(id);
+           var taskItem = _taskItemRepository.GetAsync(id).Result;
             if (taskItem == null)
             {
                 return NotFound();

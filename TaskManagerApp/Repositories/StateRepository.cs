@@ -12,14 +12,14 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public State Get(State item)
+        public async Task<State> GetAsync(State item)
         {
-            return _context.States.Where(s => s.Id == item.Id).FirstOrDefault();
+            return await _context.States.Where(s => s.Id == item.Id).FirstOrDefaultAsync();
         }
 
-        public List<State> GetAll()
+        public async Task<List<State>> GetAllAsync()
         {
-            return _context.States.ToList();
+            return await _context.States.ToListAsync();
         }
     }
 }

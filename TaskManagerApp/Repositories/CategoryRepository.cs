@@ -12,13 +12,13 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public Category Get(Category item)
+        public async Task<Category> GetAsync(Category item)
         {
-            return _context.Categories.Where(c=> c.Id == item.Id).Include(c => c.Tasks).FirstOrDefault();
+            return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).FirstOrDefaultAsync(c => c.Id == item.Id);
         }
-        public List<Category> GetAll()
+        public async Task<List<Category>> GetAllAsync()
         {
-            return _context.Categories.Include(c => c.Tasks).ToList();
+            return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).ToListAsync();
         }
     }
 }

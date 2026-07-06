@@ -1,10 +1,13 @@
 using Blazor.Client.Pages;
 using Blazor.Components;
 using Microsoft.AspNetCore.Components;
-using TaskManagerApp.Interfaces;
-using TaskManagerApp.Repositories;
 using Microsoft.EntityFrameworkCore;
 using TaskManagerApp.Data;
+using TaskManagerApp.Interfaces;
+using TaskManagerApp.InterfacesRepositories;
+using TaskManagerApp.InterfacesServices;
+using TaskManagerApp.Repositories;
+using TaskManagerApp.Services;
 
 namespace Blazor
 {
@@ -18,22 +21,13 @@ namespace Blazor
                 .AddInteractiveServerComponents()
                 .AddInteractiveWebAssemblyComponents();
 
-
-
-            builder.Services.AddControllers();
-            builder.Services.AddDbContext<TaskManagerDbContext>(options =>
-              options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-            // Add HttpClient correctly
-            builder.Services.AddScoped<HttpClient>(sp =>
+            builder.Services.AddScoped(sp =>
             {
-                var navigationManager = sp.GetRequiredService<NavigationManager>();
-
                 return new HttpClient
                 {
-                    BaseAddress = new Uri(navigationManager.BaseUri)
+                    BaseAddress = new Uri("https://localhost:5281/")
                 };
             });
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             var app = builder.Build();
 
@@ -41,26 +35,17 @@ namespace Blazor
             {
                 app.UseWebAssemblyDebugging();
             }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                app.UseHsts();
-            }
 
             app.UseHttpsRedirection();
-
             app.UseAntiforgery();
 
             app.MapStaticAssets();
 
-            app.MapControllers();
-
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode()
-                .AddInteractiveWebAssemblyRenderMode()
-                .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
+                .AddInteractiveWebAssemblyRenderMode();
 
-            app.Run();
+            app.Run(); 
         }
     }
 }

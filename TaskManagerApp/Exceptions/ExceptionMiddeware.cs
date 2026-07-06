@@ -33,7 +33,7 @@
             {
                 await HandleError(context, 400, ex.Message);
             }
-            catch (EmailNotFoundException ex)
+            catch (EmailorPasswordNotFoundException ex)
             {
                 await HandleError(context, 404, ex.Message);
             }
@@ -49,9 +49,21 @@
             {
                 await HandleError(context, 404, ex.Message);
             }
-            catch(UserAlreadyExistsException ex)
+            catch(UserNameAlreadyExistsException ex)
             {
                 await HandleError(context, 409, ex.Message);
+            }
+            catch (UserEmailAlreadyExistsException ex)
+            {
+                await HandleError(context, 409, ex.Message);
+            }
+            catch (InvalidVerificationCodeException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (EmailNotVerifiedException ex)
+            {
+                await HandleError(context, 403, ex.Message);
             }
             catch (Exception ex)
             {

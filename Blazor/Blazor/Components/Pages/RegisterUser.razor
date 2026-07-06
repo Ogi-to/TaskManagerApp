@@ -1,0 +1,61 @@
+﻿@page "/RegisterUser"
+@rendermode InteractiveServer
+@using TaskManagerApp.DTOS
+@inject HttpClient Http
+
+<h3>Register User</h3>
+
+<EditForm Model="model" OnValidSubmit="Register">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Username</label>
+        <InputText @bind-Value="model.Username" />
+    </div>
+
+    <div>
+        <label>Email</label>
+        <InputText type="email" @bind-Value="model.Email" />
+    </div>
+
+    <div>
+        <label>Password</label>
+        <InputText type="password" @bind-Value="model.Password" />
+    </div>
+
+    <button type="submit">Register</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <p>@message</p>
+}
+
+@code {
+    private RegisterUserDto model = new();
+    private string? message;
+
+    private async Task Register()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/user/register", model);
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "User registered successfully!";
+            }
+            else
+            {
+                message = $"Server error: {content}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Exception: {ex.Message}";
+        }
+    }
+}

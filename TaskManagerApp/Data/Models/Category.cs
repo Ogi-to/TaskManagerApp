@@ -13,7 +13,6 @@ namespace TaskManagerApp.Data.Models
         [StringLength(50, MinimumLength = 3)]
         public string Name { get; set; }
 
-        public List<TaskItem> Tasks { get; set; } = new List<TaskItem>();
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
 
     }

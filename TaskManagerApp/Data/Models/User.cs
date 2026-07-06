@@ -18,10 +18,11 @@ namespace TaskManagerApp.Data.Models
         [Required]
         [StringLength(100, MinimumLength = 3)]
         public string Email { get; set; }
+        public bool IsEmailVerified { get; set; } = false;
 
         [Required]
         [MinLength(8)]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = string.Empty;
 
         public int Streak { get; set; } = 0;
 
@@ -37,11 +38,8 @@ namespace TaskManagerApp.Data.Models
         [StringLength(8)]
         public string UserCode { get; set; }
 
-
-        public List<Challenge> Challenges { get; set; } = new List<Challenge>();
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
-        public List<TaskItem> Tasks { get; set; } = new List<TaskItem>();
         public List<UsersTasks> UsersTasks { get; set; } = new List<UsersTasks>();
 
         public List<UsersRelations> SentRelations { get; set; } = new List<UsersRelations>();

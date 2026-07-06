@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TaskManagerApp.Data;
 using TaskManagerApp.Interfaces;
+using TaskManagerApp.InterfacesRepositories;
 using TaskManagerApp.Repositories;
 
 namespace TaskManagerApp
@@ -24,14 +25,11 @@ namespace TaskManagerApp
             builder.Services.AddScoped<IRankRepository, RankRepository>();
             builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<IEmailCodeRepository, EmailCodeRepository>();
 
             // Swagger
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
-            // DbContext
-            builder.Services.AddDbContext<TaskManagerDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // CORS
             builder.Services.AddCors(options =>

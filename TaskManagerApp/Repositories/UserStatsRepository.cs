@@ -12,19 +12,19 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public UserStats Get(UserStats item)
+        public async Task<UserStats> GetAsync(int userId)
         {
-            return _context.UserStats.Where(us => us.UserId == item.UserId).Include(us => us.User).FirstOrDefault();
+            return await _context.UserStats.Where(us => us.UserId == userId).Include(us => us.User).FirstOrDefaultAsync();
         }
 
-        public void Update(UserStats item)
+        public async Task UpdateAsync(UserStats item)
         {
-            UserStats userStatsToModify = _context.UserStats.Where(us => us.UserId == item.UserId).FirstOrDefault();
+            var userStatsToModify = await _context.UserStats.Where(us => us.UserId == item.UserId).FirstOrDefaultAsync();
             userStatsToModify.HighestStreak = item.HighestStreak;
             userStatsToModify.TasksCompleted = item.TasksCompleted;
             userStatsToModify.ChallengesCompleted = item.ChallengesCompleted;
             userStatsToModify.TotalPoints = item.TotalPoints;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }

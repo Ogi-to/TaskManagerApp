@@ -38,26 +38,32 @@ namespace TaskManagerApp.Repositories
         public async Task<User?> GetAsync(int id)
         {
             return await _context.Users
-            .Include(u => u.Rank)
-            .Include(u => u.Tasks)
-            .Include(u => u.Challenges)
-            .Include(u => u.UsersTasks)
-            .Include(u => u.UsersChallenges)
-            .Include(u => u.SentRelations)
-            .Include(u => u.ReceivedRelations)
-            .FirstOrDefaultAsync(u => u.Id == id);
+             .Include(u => u.Rank)
+             .Include(u => u.UsersTasks)
+                 .ThenInclude(ut => ut.Task)
+             .Include(u => u.UsersChallenges)
+                 .ThenInclude(uc => uc.Challenge)
+             .Include(u => u.SentRelations)
+             .Include(u => u.ReceivedRelations)
+             .FirstOrDefaultAsync(u => u.Id == id);
         }
         public User GetByEmail(string email)
         {
-            return _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.UsersChallenges)
+                 .ThenInclude(uc => uc.Challenge).Include(u => u.UsersTasks)
+                 .ThenInclude(ut => ut.Task).Include(u => u.Stats).FirstOrDefault();
         }
         public User GetByUsername(string username)
         {
-            return _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.UsersChallenges)
+                 .ThenInclude(uc => uc.Challenge).Include(u => u.UsersTasks)
+                 .ThenInclude(ut => ut.Task).Include(u => u.Stats).FirstOrDefault();
         }
         public User GetByUserCode(string userCode)
         {
-            return _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.Challenges).Include(u => u.Tasks).Include(u => u.Stats).FirstOrDefault();
+            return _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.UsersChallenges)
+                 .ThenInclude(uc => uc.Challenge).Include(u => u.UsersTasks)
+                 .ThenInclude(ut => ut.Task).Include(u => u.Stats).FirstOrDefault();
         }
 
         public UsersRelations GetRelation(int initiatorId, int relatedUserId)
