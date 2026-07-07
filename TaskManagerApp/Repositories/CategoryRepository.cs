@@ -12,7 +12,7 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public async Task<Category> GetAsync(Category item)
+        public async Task<Category> GetAsync(int categoryId )
         {
             return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).FirstOrDefaultAsync(c => c.Id == item.Id);
         }

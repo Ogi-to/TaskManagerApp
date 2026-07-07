@@ -12,7 +12,7 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public async Task CompleteChalengeAsync(Challenge challenge, User user)
+        public async Task CompleteChallengeAsync(Challenge challenge, User user)
         {
             var userChallenge = await _context.UsersChallenges.Where(uc => uc.ChallengeId == challenge.Id && uc.UserId == user.Id).Include(uc => uc.Challenge).FirstOrDefaultAsync();
             var challengeToComplete = userChallenge.Challenge;
@@ -22,19 +22,30 @@ namespace TaskManagerApp.Repositories
         }
 
 
-        public async Task<Challenge> GetAsync(Challenge item)
+        public async Task<Challenge> GetAsync(int challengeId)
         {
-            return await _context.Challenges.Where(c => c.Id == item.Id).FirstOrDefaultAsync();
+            return await _context.Challenges.Where(c => c.Id == challengeId).FirstOrDefaultAsync();
         }
 
         public async Task<List<Challenge>> GetAllAsync()
         {
             return await _context.Challenges.Include(c => c.UsersChallenges).ThenInclude(uc => uc.User).ToListAsync();
         }
-
-        public async Task<List<Challenge>> GetChallengesByUserAsync(User item)
+        public async Task<List<Challenge>> GetAllByCategoryAsync(int categoryId)
         {
-            return await _context.UsersChallenges.Where(uc => uc.UserId == item.Id).Select(uc => uc.Challenge).ToListAsync();
+            return await _context.Challenges.Where(c => c.CategoryId == categoryId).ToListAsync();
+        }
+        public async Task<List<Challenge>> GetAllByLevelAsync(int levelNumber)
+        {
+            return await _context.Challenges.Where(c => c.Level == levelNumber).ToListAsync();
+        }
+        public async Task<List<Challenge>> GetAllCompletedByUserAsync(int userId)
+        {
+            return await _context.UsersChallenges.Where(uc => uc.UserId == userId && uc.State == StateType.Completed).Select(uc => uc.Challenge).ToListAsync();
+        }
+        public async Task<List<Challenge>> GetChallengesByUserAsync(int userId)
+        {
+            return await _context.UsersChallenges.Where(uc => uc.UserId == userId).Select(uc => uc.Challenge).ToListAsync();
         }
 
         public async Task JoinChallengeAsync(Challenge challenge, User user)

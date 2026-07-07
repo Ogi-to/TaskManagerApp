@@ -58,29 +58,95 @@ namespace TaskManagerApp.Services
                 throw new UserNotFoundException(user.Id);
             }
 
+            if (existingTask.UsersTasks.Any(ut => ut.UserId == existingUser.Id))
+            {
+                throw new Exception($"User with ID {existingUser.Id} is already assigned to the task with ID {existingTask.Id}.");
+            }
 
             await _taskItemRepository.AssignToUserAsync(existingTask, existingUser);
 
         }
 
-        public Task DeleteTaskAsync(int taskId)
+        public async Task DeleteTaskAsync(int taskId)
         {
-            throw new NotImplementedException();
+            var taskToDelete = await _taskItemRepository.GetAsync(taskId);
+
+            if (taskToDelete == null)
+            {
+                throw new TaskItemNotFoundException();
+            }
+             
+            await _taskItemRepository.DeleteAsync(taskToDelete);
+
         }
 
-        public Task<List<TaskItem>> ShowAllTasksByUserIdAsync(int userId)
+        public async Task<List<TaskItem>> ShowAllTasksByUserIdAsync(int userId)
         {
-            throw new NotImplementedException();
+            var existingUser = await _userRepository.GetAsync(userId);
+            if (existingUser == null)
+            {
+                throw new UserNotFoundException(userId);
+            }
+            var tasks = await _taskItemRepository.GetAllByUserAsync(userId);
+            if (!tasks.Any())
+            {
+                throw new Exception($"No tasks found for user with ID {userId}.");
+            }
+
+            return tasks;
         }
 
-        public Task<TaskItem> ShowTaskAsync(int taskId)
+        public async Task<TaskItem> ShowTaskAsync(int taskId)
         {
-            throw new NotImplementedException();
+            var existingTask = await _taskItemRepository.GetAsync(taskId);
+            if (existingTask == null)
+            {
+                throw new TaskItemNotFoundException();
+            }
+
+            return existingTask;
         }
 
-        public Task UpdateTaskAsync(TaskItem task)
+        public async Task UpdateTaskAsync(TaskItem task)
         {
-            throw new NotImplementedException();
+            var existingTask = await _taskItemRepository.GetAsync(task.Id);
+            if (existingTask == null)
+            {
+                throw new TaskItemNotFoundException();
+            }
+
+            if (AreTasksEqual(existingTask, task))
+            {
+                throw new Exception("No changes are detected. Update operation is not necessary.");
+            }
+
+            await _taskItemRepository.UpdateAsync(task);
+        }
+            
+        //used in updateTaskAsync
+        private static bool AreTasksEqual(TaskItem existing,TaskItem updated )
+        {
+            bool scalarFieldsEqual = existing.Name == updated.Name &&
+                existing.Description == updated.Description &&
+                existing.StartDate == updated.StartDate &&
+                existing.EndDate == updated.EndDate &&
+                existing.StateId == updated.StateId;
+
+            if (scalarFieldsEqual == false)
+            {
+                return false;
+            }
+             
+            var existingUserIds = existing.UsersTasks.Select(ut => ut.UserId).ToList();
+            var newUserIds = updated.UsersTasks.Select(ut => ut.UserId).ToList();
+            bool usersEqual = existingUserIds.Count == newUserIds.Count && !existingUserIds.Except(newUserIds).Any();
+
+            var existingCategoryIds = existing.TasksCategories.Select(tc => tc.CategoryId).ToList();
+            var newCategoryIds = updated.TasksCategories.Select(tc => tc.CategoryId).ToList();
+            bool categoriesEqual = existingCategoryIds.Count == newCategoryIds.Count && !existingCategoryIds.Except(newCategoryIds).Any();
+
+            return usersEqual && categoriesEqual;
         }
     }
 }
+
