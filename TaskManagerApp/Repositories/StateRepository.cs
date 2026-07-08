@@ -12,9 +12,9 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public async Task<State> GetAsync(State item)
+        public async Task<State> GetAsync(int stateId)
         {
-            return await _context.States.Where(s => s.Id == item.Id).FirstOrDefaultAsync();
+            return await _context.States.Where(s => s.Id == stateId).FirstOrDefaultAsync();
         }
 
         public async Task<List<State>> GetAllAsync()
