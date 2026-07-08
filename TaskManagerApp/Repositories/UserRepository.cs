@@ -119,14 +119,15 @@ namespace TaskManagerApp.Repositories
             userToModify.PasswordHash = item.PasswordHash;
             _context.SaveChanges();
         }
-        public void UpdateUserInfo(User item)
+        public async Task UpdateUserInfo(User item)
         {
             User userToModify = _context.Users.Where(u => u.Id == item.Id).FirstOrDefault();
             userToModify.Points = item.Points;
             userToModify.RankId = item.RankId;
             userToModify.Rank = item.Rank;
             userToModify.Streak = item.Streak;
-            _context.SaveChanges();
+            userToModify.LastActive = item.LastActive;
+            await _context.SaveChangesAsync();
         }
         public List<User> GetFriendsList(User item)
         {

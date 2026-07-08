@@ -11,13 +11,15 @@ namespace TaskManagerApp.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRankRepository _rankRepository;
         private readonly IEmailCodeRepository _emailCodeRepository;
         private readonly IEmailCodeService _emailCodeService;
         private readonly HashPasswordService _hashPasswordService;
 
-        public UserService(IUserRepository userRepository, IEmailCodeRepository emailCodeRepository , IEmailCodeService emailCodeService, HashPasswordService hashPasswordService)
+        public UserService(IUserRepository userRepository, IRankRepository rankRepository, IEmailCodeRepository emailCodeRepository, IEmailCodeService emailCodeService, HashPasswordService hashPasswordService)
         {
             _userRepository = userRepository;
+            _rankRepository = rankRepository;
             _emailCodeRepository = emailCodeRepository;
             _emailCodeService = emailCodeService;
             _hashPasswordService = hashPasswordService;
@@ -111,7 +113,92 @@ namespace TaskManagerApp.Services
             };
         }
 
-        
+        public async Task DeleteAccount(User item)
+        {
+            var user = await _userRepository.GetAsync(item.Id);
+            if (user == null)
+            {
+                throw new UserNotFoundException(item.Id);
+            }
+            _userRepository.DeleteAccount(user.Id);
+        }
+
+        public async Task<UpdateUserDto> UpdateUserInfo(User item)
+        {
+            var user = await _userRepository.GetAsync(item.Id);
+
+            if (user == null)
+            {
+                throw new UserNotFoundException(item.Id);
+            }
+
+
+            user.Streak = item.Streak;
+            user.Points = item.Points;
+            user.RankId = item.RankId;
+            user.LastActive = item.LastActive;
+
+            await _userRepository.UpdateUserInfo(user);
+            return new UpdateUserDto
+            {
+                Streak = item.Streak,
+                Points = item.Points,
+                RankId = item.RankId,
+                LastActive = item.LastActive
+            };
+        }
+
+        public async Task UpdateStreak(User item)
+        {
+            var user = await _userRepository.GetAsync(item.Id);
+            var today = DateTime.UtcNow.Date;
+            if (user == null)
+            {
+                throw new UserNotFoundException(item.Id);
+            }
+
+            if (user.LastActive.Date == today)
+            {
+                return;
+            }
+
+            if (user.LastActive.Date == today.AddDays(-1))
+            {
+                user.Streak += 1;
+            }
+            else
+            {
+                user.Streak = 1;
+            }
+
+            user.LastActive = DateTime.Today;
+            await UpdateUserInfo(user);
+        }
+
+        public async Task UpdateRank(User item)
+        {
+            var user = await _userRepository.GetAsync(item.Id);
+            if (user == null)
+            {
+                throw new UserNotFoundException(item.Id);
+            }
+
+            var newRank = await _rankRepository.GetRankForPoints(user.Points);
+            user.RankId = newRank.Id;
+            await UpdateUserInfo(user);
+        }
+
+        public async Task UpdatePoints(User item)
+        {
+            var user = await _userRepository.GetAsync(item.Id);
+            if (user == null)
+            {
+                throw new UserNotFoundException(item.Id);
+            }
+            user.Points = item.Points;
+            await UpdateUserInfo(user);
+        }
+
 
         public async Task<bool> VerifyEmail(string email, string code)
         {

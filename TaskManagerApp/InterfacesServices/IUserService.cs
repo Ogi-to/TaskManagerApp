@@ -9,6 +9,9 @@ namespace TaskManagerApp.InterfacesServices
         public Task<UserDto> LogInUser(LoginUserDto loginUserDto);
         public Task<UserDto> GetUserById(int id);
         public Task<bool> VerifyEmail(string email, string code);
-
+        public Task<UpdateUserDto> UpdateUserInfo(User item);
+        public Task UpdateStreak(User item);
+        public Task UpdateRank(User item);
+        public Task UpdatePoints(User item);
     }
 }

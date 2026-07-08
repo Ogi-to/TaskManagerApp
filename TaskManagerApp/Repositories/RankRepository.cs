@@ -12,13 +12,18 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public async Task<Rank> GetAsync(int rankId)
+        public async Task<Rank> GetAsync(Rank item)
         {
-            return await _context.Ranks.Where(r => r.Id == rankId).FirstOrDefaultAsync();
+            return await _context.Ranks.Where(r => r.Id == item.Id).FirstOrDefaultAsync();
         }
         public async Task<List<Rank>> GetAllAsync()
         {
             return await _context.Ranks.ToListAsync();
+        }
+
+        public Task<Rank> GetRankForPoints(int points)
+        {
+            return _context.Ranks.Where(r => r.StartPoints <= points && r.EndPoints > points).FirstOrDefaultAsync();
         }
     }
 }

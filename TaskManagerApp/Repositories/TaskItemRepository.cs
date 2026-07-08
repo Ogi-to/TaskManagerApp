@@ -26,7 +26,8 @@ namespace TaskManagerApp.Repositories
             taskToModify.UsersTasks.Add(new UsersTasks
             {
                 UserId = user.Id,
-                TaskId = taskToModify.Id
+                TaskId = taskToModify.Id,
+                State = StateType.NotStarted
             });
 
             await _context.SaveChangesAsync();
@@ -44,7 +45,6 @@ namespace TaskManagerApp.Repositories
         public async Task<TaskItem> GetAsync(int id)
         {
             return await _context.TaskItems
-                   .Include(t => t.State)
                    .Include(t => t.TasksCategories)
                        .ThenInclude(tc => tc.Category)
                    .Include(t => t.UsersTasks)
@@ -61,67 +61,76 @@ namespace TaskManagerApp.Repositories
 
             return await _context.TaskItems
                     .Where(t => t.UsersTasks.Any(ut => ut.UserId == userId))
-                    .Include(t => t.State)
                     .Include(t => t.TasksCategories)
                         .ThenInclude(tc => tc.Category)
                     .Include(t => t.UsersTasks)
                         .ThenInclude(ut => ut.User)
+                     .Include(t => t.UsersTasks)
+                        .ThenInclude(s => s.State)
                     .OrderBy(t => t.EndDate)
                     .ToListAsync();
         }
 
 
-        public async Task UpdateAsync(TaskItem item)
+        public async Task UpdateAsync(UsersTasks item)
         {
-            var taskToModify = await _context.TaskItems
-            .FirstOrDefaultAsync(t => t.Id == item.Id);
+            var taskToModify = await _context.UsersTasks.Include(t => t.Task).FirstOrDefaultAsync(t => t.TaskId == item.TaskId && t.UserId == item.UserId); 
 
-            taskToModify.Name = item.Name;
-            taskToModify.Description = item.Description;
-            taskToModify.StateId = item.StateId;
-            taskToModify.StartDate = item.StartDate;
-            taskToModify.EndDate = item.EndDate;
+            taskToModify.Task.Name = item.Task.Name;
+            taskToModify.Task.Description = item.Task.Description;
+            taskToModify.State = item.State;
+            taskToModify.Task.StartDate = item.Task.StartDate;
+            taskToModify.Task.EndDate = item.Task.EndDate;
 
             //manually because the delete behaviour is set to strict
             //for UserTasks
-            var currentUserIds = taskToModify.UsersTasks.Select(ut => ut.UserId).ToList();
-            var newUserIds = item.UsersTasks.Select(ut => ut.UserId).ToList();
+            var currentUserIds = taskToModify.Task.UsersTasks.Select(ut => ut.UserId).ToList();
+            var newUserIds = item.Task.UsersTasks.Select(ut => ut.UserId).ToList();
 
-            List<UsersTasks> userJoinsToRemove = taskToModify.UsersTasks.Where(ut => !newUserIds.Contains( ut.UserId)).ToList(); // tezi koito ne se sydurjat w nowite
+            List<UsersTasks> userJoinsToRemove = taskToModify.Task.UsersTasks.Where(ut => !newUserIds.Contains( ut.UserId)).ToList(); // tezi koito ne se sydurjat w nowite
             foreach (var ut in userJoinsToRemove)
             {
-                taskToModify.UsersTasks.Remove(ut);
+                taskToModify.Task.UsersTasks.Remove(ut);
             }
 
-            List<UsersTasks> userJoinsToAdd = item.UsersTasks.Where(ut => !currentUserIds.Contains(ut.UserId)).ToList(); // tezi koito ne se sydyrjat w segashnite
+            List<UsersTasks> userJoinsToAdd = item.Task.UsersTasks.Where(ut => !currentUserIds.Contains(ut.UserId)).ToList(); // tezi koito ne se sydyrjat w segashnite
             foreach (var ut in userJoinsToAdd)
             {
-                taskToModify.UsersTasks.Add(new UsersTasks
+                taskToModify.Task.UsersTasks.Add(new UsersTasks
                 {
                     UserId = ut.UserId,
-                    TaskId = taskToModify.Id
+                    TaskId = taskToModify.Task.Id
                 });
             }
 
             //for TasksCategories
-            var currentCategoryIds = taskToModify.TasksCategories.Select(tc => tc.CategoryId).ToList();
-            var newCategoryIds = item.TasksCategories.Select(tc => tc.CategoryId).ToList();
+            var currentCategoryIds = taskToModify.Task.TasksCategories.Select(tc => tc.CategoryId).ToList();
+            var newCategoryIds = item.Task.TasksCategories.Select(tc => tc.CategoryId).ToList();
 
-            List<TasksCategories> categoryJoinsToRemove = taskToModify.TasksCategories.Where(ut => !newCategoryIds.Contains(ut.CategoryId)).ToList(); // tezi koito ne se sydurjat w nowite
+            List<TasksCategories> categoryJoinsToRemove = taskToModify.Task.TasksCategories.Where(ut => !newCategoryIds.Contains(ut.CategoryId)).ToList(); // tezi koito ne se sydurjat w nowite
             foreach (var ut in categoryJoinsToRemove)
             {
-                taskToModify.TasksCategories.Remove(ut);
+                taskToModify.Task.TasksCategories.Remove(ut);
             }
 
-            List<TasksCategories> categoryJoinsToAdd = item.TasksCategories.Where(ut => !currentCategoryIds.Contains(ut.CategoryId)).ToList(); // tezi koito ne se sydyrjat w segashnite
+            List<TasksCategories> categoryJoinsToAdd = item.Task.TasksCategories.Where(ut => !currentCategoryIds.Contains(ut.CategoryId)).ToList(); // tezi koito ne se sydyrjat w segashnite
             foreach (var ut in categoryJoinsToAdd)
             {
-                taskToModify.TasksCategories.Add(new TasksCategories
+                taskToModify.Task.TasksCategories.Add(new TasksCategories
                 {
                     CategoryId = ut.CategoryId,
-                    TaskId = taskToModify.Id
+                    TaskId = taskToModify.Task.Id
                 });
             }
+
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task CompleteTask(UsersTasks item)
+        {
+            var task = await _context.UsersTasks.FirstOrDefaultAsync(t => t.TaskId == item.TaskId && t.UserId == item.UserId);
+            task.State = StateType.Completed;
 
 
             await _context.SaveChangesAsync();

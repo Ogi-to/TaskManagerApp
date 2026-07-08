@@ -4,7 +4,9 @@ namespace TaskManagerApp.Interfaces
 {
     public interface IRankRepository
     {
-        public Task<Rank> GetAsync(int rankId);
+        public Task<Rank> GetAsync(Rank item);
+
+        public Task<Rank> GetRankForPoints(int points);
         public Task<List<Rank>> GetAllAsync();
 
 

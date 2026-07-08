@@ -21,9 +21,6 @@ namespace TaskManagerApp.Data.Models
 
         public DateTime? EndDate { get; set; }
 
-        public int StateId { get; set; }
-        public StateType State { get; set; }
-
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
 
         public List<UsersTasks> UsersTasks { get; set; } = new List<UsersTasks>();

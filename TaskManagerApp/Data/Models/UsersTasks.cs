@@ -12,5 +12,7 @@ namespace TaskManagerApp.Data.Models
 
         public TaskItem Task { get; set; }
         public User User { get; set; }
+
+        public StateType State { get; set; }
     }
 }

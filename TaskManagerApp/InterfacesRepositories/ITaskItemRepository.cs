@@ -17,5 +17,7 @@ namespace TaskManagerApp.Interfaces
 
         //public Task<List<TaskItem>> GetAllAsync();
         public Task<List<TaskItem>> GetAllByUserAsync(int userId);
+
+        public Task CompleteTask(TaskItem item);
     }
 }

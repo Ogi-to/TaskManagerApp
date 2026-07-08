@@ -13,10 +13,11 @@ namespace TaskManagerApp.Interfaces
         public UsersRelations GetRelation(int initiatorId, int relatedUserId);
 
         public User CreateAccount(User item);
+        public void DeleteAccount(int id);
 
         public void UpdateAccountInfo(User item);
 
-        public void UpdateUserInfo(User item);
+        public Task UpdateUserInfo(User item);
 
         public void SendRequest(UsersRelations relation);
 

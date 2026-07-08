@@ -10,35 +10,45 @@ namespace TaskManagerApp.Services
     {
         private readonly ITaskItemRepository _taskItemRepository;
         private readonly IUserRepository _userRepository;
-        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository)
+        private readonly IUserService _userService;
+        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;
-
+            _userService = userService;
         }
         public async Task AddTaskAsync(TaskItem task)
         {
             if (string.IsNullOrWhiteSpace(task.Name))
             {
-                throw new Exception("Task name cannot be empty.");
+                throw new EmptyTaskNameException();
             }
             if (task.StartDate == null)
             {
-                throw new Exception("Task must have a start date.");
+                throw new NoTaskStartDateException();
             }
-            if (task.EndDate == null)
+            //if (task.EndDate == null)
+            //{
+            //throw new NoTaskEndDateException();
+            //}
+            if (task.EndDate != null)
             {
-                throw new Exception("Task must have an end date.");
+                if (task.EndDate < task.StartDate)
+                {
+                    throw new IncorrectTaskEndDateException();
+                }
+                if (task.EndDate <= DateTime.Now)
+                {
+                    throw new IncorrectTaskEndDateException();
+                }
             }
-            if (task.EndDate < task.StartDate)
+
+            if (!task.TasksCategories.Any())
             {
-                throw new Exception("Task end date cannot be before the start date.");
-            }
-            if (task.EndDate <= DateTime.Now)
-            {
-                throw new Exception("Task end date must be in the future.");
+                throw new NoTaskCategoryException();
             }
             
+           
 
             await _taskItemRepository.AddTaskAsync(task);
 
@@ -61,7 +71,7 @@ namespace TaskManagerApp.Services
 
             if (existingTask.UsersTasks.Any(ut => ut.UserId == existingUser.Id))
             {
-                throw new Exception($"User with ID {existingUser.Id} is already assigned to the task with ID {existingTask.Id}.");
+                throw new UserAlreadyHasThisTaskException();
             }
 
             await _taskItemRepository.AssignToUserAsync(existingTask, existingUser);
@@ -91,7 +101,7 @@ namespace TaskManagerApp.Services
             var tasks = await _taskItemRepository.GetAllByUserAsync(userId);
             if (!tasks.Any())
             {
-                throw new Exception($"No tasks found for user with ID {userId}.");
+                throw new UserDoesntHaveTasksException();
             }
 
             return tasks;
@@ -118,7 +128,7 @@ namespace TaskManagerApp.Services
 
             if (AreTasksEqual(existingTask, task))
             {
-                throw new Exception("No changes are detected. Update operation is not necessary.");
+                throw new UnnecessaryUpdateOperationException();
             }
 
             await _taskItemRepository.UpdateAsync(task);
@@ -131,7 +141,7 @@ namespace TaskManagerApp.Services
                 existing.Description == updated.Description &&
                 existing.StartDate == updated.StartDate &&
                 existing.EndDate == updated.EndDate &&
-                existing.StateId == updated.StateId;
+                existing.State == updated.State;
 
             if (scalarFieldsEqual == false)
             {
@@ -147,6 +157,40 @@ namespace TaskManagerApp.Services
             bool categoriesEqual = existingCategoryIds.Count == newCategoryIds.Count && !existingCategoryIds.Except(newCategoryIds).Any();
 
             return usersEqual && categoriesEqual;
+        }
+
+        public async Task CompleteTask(TaskItem task, User user)
+        {
+            UsersTasks usersTasks = new UsersTasks();
+            var existingTask = await _taskItemRepository.GetAsync(task.Id);
+            if (existingTask == null)
+            {
+                throw new TaskItemNotFoundException();
+            }
+
+            var existingUser = await _userRepository.GetAsync(user.Id);
+            if (existingUser == null)
+            {
+                throw new UserNotFoundException(user.Id);
+            }
+
+            if(!existingTask.UsersTasks.Any(ut => ut.UserId == existingUser.Id))
+            {
+                throw new UserNotAssignedToTaskException();
+            }
+            if()
+            {
+                throw new TaskAlreadyCompletedException();
+            }
+
+            existingUser.Points += 200;
+            await _userService.UpdatePoints(existingUser);
+            await _userService.UpdateStreak(existingUser);
+            await _userService.UpdateRank(existingUser);
+
+            await _taskItemRepository.CompleteTask(existingTask);
+
+
         }
     }
 }
