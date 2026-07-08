@@ -1,5 +1,6 @@
 ﻿using TaskManagerApp.Data.Models;
 using TaskManagerApp.Exceptions;
+using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -7,9 +8,9 @@ namespace TaskManagerApp.Services
 {
     public class TaskItemService : ITaskItemService
     {
-        private readonly TaskItemRepository _taskItemRepository;
-        private readonly UserRepository _userRepository;
-        public TaskItemService(TaskItemRepository repository, UserRepository userRepository)
+        private readonly ITaskItemRepository _taskItemRepository;
+        private readonly IUserRepository _userRepository;
+        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;

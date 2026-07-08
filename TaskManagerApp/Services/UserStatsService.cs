@@ -1,5 +1,6 @@
 ﻿using TaskManagerApp.Data.Models;
 using TaskManagerApp.Exceptions;
+using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -7,8 +8,8 @@ namespace TaskManagerApp.Services
 {
     public class UserStatsService : IUserStatsService
     {
-        private readonly UserStatsRepository _repository;
-        public UserStatsService(UserStatsRepository repository)
+        private readonly IUserStatsRepository _repository;
+        public UserStatsService(IUserStatsRepository repository)
         {
             _repository = repository;
         }

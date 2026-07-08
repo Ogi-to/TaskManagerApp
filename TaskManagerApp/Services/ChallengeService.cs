@@ -1,6 +1,7 @@
 ﻿//using Org.BouncyCastle.Asn1.Cmp; nqmam predstawa otkyde doide
 using TaskManagerApp.Data.Models;
 using TaskManagerApp.Exceptions;
+using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -8,10 +9,10 @@ namespace TaskManagerApp.Services
 {
     public class ChallengeService : IChallengeService
     {
-        private readonly ChallengeRepository _challengeRepository;
-        private readonly UserRepository _userRepository;
-        private readonly CategoryRepository _categoryRepository;
-        public ChallengeService(ChallengeRepository challengeRepository, UserRepository userRepository, CategoryRepository categoryRepository)
+        private readonly IChallengeRepository _challengeRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        public ChallengeService(IChallengeRepository challengeRepository, IUserRepository userRepository, ICategoryRepository categoryRepository)
         {
             _challengeRepository = challengeRepository;
             _userRepository = userRepository;
