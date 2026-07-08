@@ -12,9 +12,9 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public async Task<Rank> GetAsync(Rank item)
+        public async Task<Rank> GetAsync(int id)
         {
-            return await _context.Ranks.Where(r => r.Id == item.Id).FirstOrDefaultAsync();
+            return await _context.Ranks.Where(r => r.Id == id).FirstOrDefaultAsync();
         }
         public async Task<List<Rank>> GetAllAsync()
         {

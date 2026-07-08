@@ -13,7 +13,6 @@ namespace TaskManagerApp.Interfaces
 
         public Task AddTaskAsync(TaskItem item);
 
-        public Task AssignToUserAsync(TaskItem task, User user);
 
         //public Task<List<TaskItem>> GetAllAsync();
         public Task<List<TaskItem>> GetAllByUserAsync(int userId);

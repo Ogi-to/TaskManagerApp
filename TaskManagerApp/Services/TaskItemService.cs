@@ -17,7 +17,7 @@ namespace TaskManagerApp.Services
             _userRepository = userRepository;
             _userService = userService;
         }
-        public async Task AddTaskAsync(TaskItem task)
+        public async Task AddTaskAsync(TaskItem task, User user)
         {
             if (string.IsNullOrWhiteSpace(task.Name))
             {
@@ -47,34 +47,23 @@ namespace TaskManagerApp.Services
             {
                 throw new NoTaskCategoryException();
             }
-            
-           
+
+            var existingUser = await _userRepository.GetAsync(user.Id);
+            if (existingUser == null) {
+                throw new UserNotFoundException(user.Id);
+            }
+            var finalTask = new TaskItem
+            {
+                Name = task.Name,
+                Description = task.Description,
+                StartDate = task.StartDate,
+                EndDate = task.EndDate,
+                UserId = existingUser.Id,
+                TasksCategories = task.TasksCategories
+            };
 
             await _taskItemRepository.AddTaskAsync(task);
 
-
-        }
-
-        public async Task AddUserAsync(TaskItem task, User user)
-        {
-            var existingTask = await _taskItemRepository.GetAsync(task.Id);
-            if (existingTask == null)
-            {
-                throw new TaskItemNotFoundException();
-            }
-
-            var existingUser = await _userRepository.GetAsync(user.Id);
-            if (existingUser == null)
-            {
-                throw new UserNotFoundException(user.Id);
-            }
-
-            if (existingTask.UsersTasks.Any(ut => ut.UserId == existingUser.Id))
-            {
-                throw new UserAlreadyHasThisTaskException();
-            }
-
-            await _taskItemRepository.AssignToUserAsync(existingTask, existingUser);
 
         }
 
@@ -141,52 +130,37 @@ namespace TaskManagerApp.Services
                 existing.Description == updated.Description &&
                 existing.StartDate == updated.StartDate &&
                 existing.EndDate == updated.EndDate &&
-                existing.State == updated.State;
+                existing.UserId == updated.UserId;
 
             if (scalarFieldsEqual == false)
             {
                 return false;
             }
-             
-            var existingUserIds = existing.UsersTasks.Select(ut => ut.UserId).ToList();
-            var newUserIds = updated.UsersTasks.Select(ut => ut.UserId).ToList();
-            bool usersEqual = existingUserIds.Count == newUserIds.Count && !existingUserIds.Except(newUserIds).Any();
 
             var existingCategoryIds = existing.TasksCategories.Select(tc => tc.CategoryId).ToList();
             var newCategoryIds = updated.TasksCategories.Select(tc => tc.CategoryId).ToList();
             bool categoriesEqual = existingCategoryIds.Count == newCategoryIds.Count && !existingCategoryIds.Except(newCategoryIds).Any();
 
-            return usersEqual && categoriesEqual;
+            return  categoriesEqual;
         }
 
-        public async Task CompleteTask(TaskItem task, User user)
+        public async Task CompleteTask(TaskItem task)
         {
-            UsersTasks usersTasks = new UsersTasks();
             var existingTask = await _taskItemRepository.GetAsync(task.Id);
             if (existingTask == null)
             {
                 throw new TaskItemNotFoundException();
             }
 
-            var existingUser = await _userRepository.GetAsync(user.Id);
-            if (existingUser == null)
-            {
-                throw new UserNotFoundException(user.Id);
-            }
-
-            if(!existingTask.UsersTasks.Any(ut => ut.UserId == existingUser.Id))
-            {
-                throw new UserNotAssignedToTaskException();
-            }
-            if()
+            if(existingTask.State == StateType.Completed)
             {
                 throw new TaskAlreadyCompletedException();
             }
 
-            existingUser.Points += 200;
-            await _userService.UpdatePoints(existingUser);
-            await _userService.UpdateStreak(existingUser);
-            await _userService.UpdateRank(existingUser);
+            existingTask.User.Points += 200;
+            await _userService.UpdatePoints(existingTask.User);
+            await _userService.UpdateStreak(existingTask.User);
+            await _userService.UpdateRank(existingTask.User);
 
             await _taskItemRepository.CompleteTask(existingTask);
 

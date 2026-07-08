@@ -40,7 +40,7 @@ namespace TaskManagerApp.Data.Models
 
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
-        public List<UsersTasks> UsersTasks { get; set; } = new List<UsersTasks>();
+        public List<TaskItem> TaskItems { get; set; }
 
         public List<UsersRelations> SentRelations { get; set; } = new List<UsersRelations>();
 

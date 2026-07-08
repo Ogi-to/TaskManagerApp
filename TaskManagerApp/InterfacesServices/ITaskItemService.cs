@@ -6,8 +6,7 @@ namespace TaskManagerApp.InterfacesServices
 {
     public interface ITaskItemService
     {
-        public Task AddTaskAsync(TaskItem task);
-        public Task AddUserAsync(TaskItem task, User user);
+        public Task AddTaskAsync(TaskItem task, User user);
 
         public Task DeleteTaskAsync(int taskId);
         public Task<TaskItem> ShowTaskAsync(int taskId);

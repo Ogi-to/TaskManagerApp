@@ -16,14 +16,20 @@ namespace TaskManagerApp.Data.Models
         public string Description { get; set; }
 
         [Required]
-        public DateTime? StartDate { get; set; }
+        public DateTime StartDate { get; set; }
 
 
         public DateTime? EndDate { get; set; }
+        public StateType State { get; set; }
+
+        // Foreign key
+        public int UserId { get; set; }
+
+        // Navigation property
+        public User User { get; set; }
 
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
 
-        public List<UsersTasks> UsersTasks { get; set; } = new List<UsersTasks>();
     }
 }
  

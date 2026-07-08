@@ -39,8 +39,7 @@ namespace TaskManagerApp.Repositories
         {
             return await _context.Users
              .Include(u => u.Rank)
-             .Include(u => u.UsersTasks)
-                 .ThenInclude(ut => ut.Task)
+             .Include(u => u.TaskItems)
              .Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge)
              .Include(u => u.SentRelations)
@@ -50,20 +49,20 @@ namespace TaskManagerApp.Repositories
         public User GetByEmail(string email)
         {
             return _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.UsersChallenges)
-                 .ThenInclude(uc => uc.Challenge).Include(u => u.UsersTasks)
-                 .ThenInclude(ut => ut.Task).Include(u => u.Stats).FirstOrDefault();
+                 .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
+                 .Include(u => u.Stats).FirstOrDefault();
         }
         public User GetByUsername(string username)
         {
             return _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.UsersChallenges)
-                 .ThenInclude(uc => uc.Challenge).Include(u => u.UsersTasks)
-                 .ThenInclude(ut => ut.Task).Include(u => u.Stats).FirstOrDefault();
+                 .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
+                 .Include(u => u.Stats).FirstOrDefault();
         }
         public User GetByUserCode(string userCode)
         {
             return _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.UsersChallenges)
-                 .ThenInclude(uc => uc.Challenge).Include(u => u.UsersTasks)
-                 .ThenInclude(ut => ut.Task).Include(u => u.Stats).FirstOrDefault();
+                 .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
+                 .Include(u => u.Stats).FirstOrDefault();
         }
 
         public UsersRelations GetRelation(int initiatorId, int relatedUserId)
