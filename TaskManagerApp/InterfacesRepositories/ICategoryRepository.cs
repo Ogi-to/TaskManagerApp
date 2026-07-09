@@ -6,6 +6,7 @@ namespace TaskManagerApp.Interfaces
     {
         public Task<Category> GetAsync(int categoryId);
         public Task<List<Category>> GetAllAsync();
+        public Task<List<Category>> GetByIdsAsync(List<int> categoryIds);
 
     }
 }

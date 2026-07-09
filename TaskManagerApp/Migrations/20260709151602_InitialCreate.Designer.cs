@@ -12,7 +12,7 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    [Migration("20260708202202_InitialCreate")]
+    [Migration("20260709151602_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -65,12 +65,6 @@ namespace TaskManagerApp.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Points")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StateId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("Trophy")
@@ -307,9 +301,6 @@ namespace TaskManagerApp.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StateId")
                         .HasColumnType("integer");
 
                     b.HasKey("ChallengeId", "UserId");

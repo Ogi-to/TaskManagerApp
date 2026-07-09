@@ -64,12 +64,6 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("integer");
 
-                    b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StateId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("Trophy")
                         .HasColumnType("integer");
 
@@ -304,9 +298,6 @@ namespace TaskManagerApp.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StateId")
                         .HasColumnType("integer");
 
                     b.HasKey("ChallengeId", "UserId");

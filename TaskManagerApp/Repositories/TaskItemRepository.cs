@@ -53,6 +53,17 @@ namespace TaskManagerApp.Repositories
                     .ToListAsync();
         }
 
+        public async Task<List<TaskItem>> GetAllAsync()
+        {
+            return await _context.TaskItems
+                    .Include(t => t.TasksCategories)
+                        .ThenInclude(tc => tc.Category)
+                    .Include(t => t.UserId)
+                    .Include(t => t.StartDate)
+                    .Include(t => t.EndDate)
+                    .ToListAsync();
+        }
+
 
         public async Task UpdateAsync(TaskItem item)
         {
@@ -96,5 +107,15 @@ namespace TaskManagerApp.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+        public Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow)
+        {
+            return _context.TaskItems
+                .Where(t => t.EndDate < utcNow &&
+                            t.State != StateType.Completed &&
+                            t.State != StateType.Overdue)
+                .ToListAsync();
+        }
+    
     }
 }

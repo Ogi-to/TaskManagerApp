@@ -12,11 +12,16 @@ namespace TaskManagerApp.Services
         private readonly IChallengeRepository _challengeRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICategoryRepository _categoryRepository;
-        public ChallengeService(IChallengeRepository challengeRepository, IUserRepository userRepository, ICategoryRepository categoryRepository)
+        private readonly IUserStatsService _userStatsService;
+        private readonly IUserService _userService;
+        public ChallengeService(IChallengeRepository challengeRepository, IUserRepository userRepository, ICategoryRepository categoryRepository, 
+            IUserStatsService userStatsService, IUserService userService)
         {
-            _challengeRepository = challengeRepository;
+            _challengeRepository = challengeRepository; 
             _userRepository = userRepository;
             _categoryRepository = categoryRepository;
+            _userStatsService = userStatsService;
+            _userService = userService;
         }
         public async Task CompleteChallengeAsync(int challengeId, int userId)
         {
@@ -38,6 +43,15 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception($"User with ID {userId} hasn't joined the challenge with ID {challengeId}.");
             }
+            existingUser.Points += existingChallenge.Points;
+            _userService.UpdatePoints(existingUser);
+            _userService.UpdateRank(existingUser);
+            _userService.UpdateStreak(existingUser);
+
+            var userStats = await _userStatsService.ShowUserStatsByIdAsync(userId);
+            userStats.ChallengesCompleted += 1;
+            _userStatsService.UpdateUserStatsByIdAsync(existingUser.Id);
+
 
             await _challengeRepository.CompleteChallengeAsync(existingChallenge, existingUser);
         }

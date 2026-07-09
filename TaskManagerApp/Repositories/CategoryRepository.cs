@@ -20,5 +20,10 @@ namespace TaskManagerApp.Repositories
         {
             return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).ToListAsync();
         }
+
+        public Task<List<Category>> GetByIdsAsync(List<int> categoryIds)
+        {
+            return _context.Categories.Where(c => categoryIds.Contains(c.Id)).ToListAsync();
+        }
     }
 }

@@ -82,9 +82,7 @@ namespace TaskManagerApp.Migrations
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
                     Trophy = table.Column<int>(type: "integer", nullable: true),
                     Points = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    StateId = table.Column<int>(type: "integer", nullable: false),
-                    State = table.Column<int>(type: "integer", nullable: false)
+                    Description = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -155,7 +153,6 @@ namespace TaskManagerApp.Migrations
                 {
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     ChallengeId = table.Column<int>(type: "integer", nullable: false),
-                    StateId = table.Column<int>(type: "integer", nullable: false),
                     State = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>

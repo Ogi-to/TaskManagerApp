@@ -9,9 +9,11 @@ namespace TaskManagerApp.Services
     public class UserStatsService : IUserStatsService
     {
         private readonly IUserStatsRepository _repository;
-        public UserStatsService(IUserStatsRepository repository)
+        private readonly IUserRepository _userRepository;
+        public UserStatsService(IUserStatsRepository repository, IUserRepository userRepository)
         {
             _repository = repository;
+            _userRepository = userRepository;
         }
         public async Task<UserStats> ShowUserStatsByIdAsync(int userId)
         {
@@ -31,20 +33,22 @@ namespace TaskManagerApp.Services
             };
         }
 
-        public async Task UpdateUserStatsByIdAsync(int userId, UserStats userStats)
+        public async Task UpdateUserStatsByIdAsync(int userId)
         {
             //checks if the current stats of an user by id are different from the new 
             //and accordingly updates if necessary
             var currentStats = await _repository.GetAsync(userId);
-            if (currentStats.HighestStreak == userStats.HighestStreak &&
-                currentStats.TasksCompleted == userStats.TasksCompleted &&
-                currentStats.ChallengesCompleted == userStats.ChallengesCompleted &&
-                currentStats.TotalPoints == userStats.TotalPoints)
+            var user = await _userRepository.GetAsync(userId);
+            if (user.Streak > currentStats.HighestStreak)
             {
-                throw new Exception("No changes detected.");
+                currentStats.HighestStreak = user.Streak;
             }
-            await _repository.UpdateAsync(userStats);
+            if (user.Points > currentStats.TotalPoints)
+            {
+                currentStats.TotalPoints = user.Points;
+            }
 
+            await _repository.UpdateAsync(currentStats);
         }
     }
 }

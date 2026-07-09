@@ -20,10 +20,8 @@ namespace TaskManagerApp.Repositories
         public async Task UpdateAsync(UserStats item)
         {
             var userStatsToModify = await _context.UserStats.Where(us => us.UserId == item.UserId).FirstOrDefaultAsync();
-            userStatsToModify.HighestStreak = item.HighestStreak;
             userStatsToModify.TasksCompleted = item.TasksCompleted;
             userStatsToModify.ChallengesCompleted = item.ChallengesCompleted;
-            userStatsToModify.TotalPoints = item.TotalPoints;
             await _context.SaveChangesAsync();
         }
     }

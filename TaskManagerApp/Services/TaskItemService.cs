@@ -11,13 +11,17 @@ namespace TaskManagerApp.Services
         private readonly ITaskItemRepository _taskItemRepository;
         private readonly IUserRepository _userRepository;
         private readonly IUserService _userService;
-        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService)
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IUserStatsService _userStatsService;
+        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService, ICategoryRepository categoryRepository, IUserStatsService userStatsService)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;
             _userService = userService;
+            _categoryRepository = categoryRepository;
+            _userStatsService = userStatsService;
         }
-        public async Task AddTaskAsync(TaskItem task, User user)
+        public async Task AddTaskAsync(TaskItem task, User user, List<int> categoryIds)
         {
             if (string.IsNullOrWhiteSpace(task.Name))
             {
@@ -37,16 +41,20 @@ namespace TaskManagerApp.Services
                 {
                     throw new IncorrectTaskEndDateException();
                 }
-                if (task.EndDate <= DateTime.Now)
+                if (task.EndDate <= DateTime.UtcNow)
                 {
                     throw new IncorrectTaskEndDateException();
                 }
             }
 
-            if (!task.TasksCategories.Any())
+            var categories = await _categoryRepository.GetByIdsAsync(categoryIds);
+
+            if (categories.Count != categoryIds.Count)
             {
-                throw new NoTaskCategoryException();
+                throw new Exception("These categories do not exist.");
             }
+
+   
 
             var existingUser = await _userRepository.GetAsync(user.Id);
             if (existingUser == null) {
@@ -59,10 +67,17 @@ namespace TaskManagerApp.Services
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 UserId = existingUser.Id,
-                TasksCategories = task.TasksCategories
             };
+            foreach (var categoryId in categoryIds)
+            {
+                finalTask.TasksCategories.Add(new TasksCategories
+                {
+                    CategoryId = categoryId
+                });
+            }
 
-            await _taskItemRepository.AddTaskAsync(task);
+
+            await _taskItemRepository.AddTaskAsync(finalTask);
 
 
         }
@@ -156,15 +171,39 @@ namespace TaskManagerApp.Services
             {
                 throw new TaskAlreadyCompletedException();
             }
+            if (existingTask.State == StateType.Overdue)
+            {
+                throw new TaskAlreadyOverdueException();
+            }
+
+            
 
             existingTask.User.Points += 200;
             await _userService.UpdatePoints(existingTask.User);
             await _userService.UpdateStreak(existingTask.User);
             await _userService.UpdateRank(existingTask.User);
 
+            var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
+            userStats.TasksCompleted += 1;
+
+
+
+            await _userStatsService.UpdateUserStatsByIdAsync(existingTask.UserId);
+
             await _taskItemRepository.CompleteTask(existingTask);
 
 
+        }
+
+        public async Task MarkOverdueTasksAsync()
+        {
+            var overdueTasks = await _taskItemRepository.GetTasksPastDueAsync(DateTime.UtcNow);
+
+            foreach (var task in overdueTasks)
+            {
+                task.State = StateType.Overdue;
+                await _taskItemRepository.UpdateAsync(task);
+            }
         }
     }
 }

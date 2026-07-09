@@ -31,8 +31,5 @@ namespace TaskManagerApp.Data.Models
 
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
-        public int StateId { get; set; }
-        public StateType State { get; set; }
-
     }
 }

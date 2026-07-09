@@ -16,8 +16,7 @@ namespace TaskManagerApp.Repositories
         {
             var userChallenge = await _context.UsersChallenges.Where(uc => uc.ChallengeId == challenge.Id && uc.UserId == user.Id).Include(uc => uc.Challenge).FirstOrDefaultAsync();
             var challengeToComplete = userChallenge.Challenge;
-            challengeToComplete.State = StateType.Completed;
-            challengeToComplete.StateId = (int)StateType.Completed;
+            userChallenge.State = StateType.Completed;
             await _context.SaveChangesAsync();
         }
 
@@ -54,7 +53,6 @@ namespace TaskManagerApp.Repositories
             {
                 UserId = user.Id,
                 ChallengeId = challenge.Id,
-                StateId = (int)StateType.InProgress,
                 State = StateType.InProgress
             };
             await _context.UsersChallenges.AddAsync(userChallenge);
