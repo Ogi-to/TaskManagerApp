@@ -108,14 +108,24 @@ namespace TaskManagerApp.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow)
+        public async Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow)
         {
-            return _context.TaskItems
+            return await _context.TaskItems
                 .Where(t => t.EndDate < utcNow &&
                             t.State != StateType.Completed &&
                             t.State != StateType.Overdue)
                 .ToListAsync();
         }
+
+        public async Task DeleteOverdueTaskMoreThanDay(DateTime utcNow)
+        {
+            var overdueTasks = await _context.TaskItems.Where(t => t.State == StateType.Overdue && t.EndDate < utcNow.AddDays(-1))
+                .ToListAsync();
+            _context.TaskItems.RemoveRange(overdueTasks);
+            await _context.SaveChangesAsync();
+        }
+
+
     
     }
 }

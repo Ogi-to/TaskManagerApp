@@ -34,6 +34,11 @@ namespace TaskManagerApp.Repositories
         {
             return await _context.Challenges.Where(c => c.CategoryId == categoryId).ToListAsync();
         }
+
+        public async Task<List<Challenge>> GetAllActiveAsync()
+        {
+            return await _context.Challenges.Where(c => c.StartDate != null && c.EndDate != null).ToListAsync();
+        }
         public async Task<List<Challenge>> GetAllByLevelAsync(int levelNumber)
         {
             return await _context.Challenges.Where(c => c.Level == levelNumber).ToListAsync();
@@ -56,6 +61,60 @@ namespace TaskManagerApp.Repositories
                 State = StateType.InProgress
             };
             await _context.UsersChallenges.AddAsync(userChallenge);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Challenge>> ChooseRandomChallenges(int numberOfChallengesToGet)
+        {
+            var random = new Random();
+
+            var availableChallenges = await _context.Challenges
+                .Where(c => c.StartDate == null && c.EndDate == null)
+                .ToListAsync();
+
+            var randomChallenges = availableChallenges
+                .OrderBy(_ => random.Next())
+                .Take(numberOfChallengesToGet)
+                .ToList();
+
+            foreach (var challenge in randomChallenges)
+            {
+                challenge.StartDate = DateOnly.FromDateTime(DateTime.Now);
+                challenge.EndDate = DateOnly.FromDateTime(
+                    DateTime.Now.AddDays(challenge.DurationDays));
+            }
+
+            await _context.SaveChangesAsync();
+
+            return randomChallenges;
+        }
+
+        public async Task RemoveChallengesActivity(List<Challenge> challenges)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            var expiredChallenges = challenges
+                .Where(c => c.StartDate != null &&
+                            c.EndDate != null &&
+                            c.EndDate < today)
+                .ToList();
+
+            var expiredIds = expiredChallenges
+                .Select(c => c.Id)
+                .ToList();
+
+            var userChallenges = await _context.UsersChallenges
+                .Where(uc => expiredIds.Contains(uc.ChallengeId))
+                .ToListAsync();
+
+            _context.UsersChallenges.RemoveRange(userChallenges);
+
+            foreach (var challenge in expiredChallenges)
+            {
+                challenge.StartDate = null;
+                challenge.EndDate = null;
+            }
+
             await _context.SaveChangesAsync();
         }
     }

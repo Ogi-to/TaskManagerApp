@@ -123,40 +123,9 @@ namespace TaskManagerApp.Services
             _userRepository.DeleteAccount(user.Id);
         }
 
-        public async Task<UpdateUserDto> UpdateUserInfo(User item)
+        public async Task UpdateStreak(User user)
         {
-            var user = await _userRepository.GetAsync(item.Id);
-
-            if (user == null)
-            {
-                throw new UserNotFoundException(item.Id);
-            }
-
-
-            user.Streak = item.Streak;
-            user.Points = item.Points;
-            user.RankId = item.RankId;
-            user.LastActive = item.LastActive;
-
-            await _userRepository.UpdateUserInfo(user);
-            return new UpdateUserDto
-            {
-                Streak = item.Streak,
-                Points = item.Points,
-                RankId = item.RankId,
-                LastActive = item.LastActive
-            };
-        }
-
-        public async Task UpdateStreak(User item)
-        {
-            var user = await _userRepository.GetAsync(item.Id);
             var today = DateTime.UtcNow.Date;
-            if (user == null)
-            {
-                throw new UserNotFoundException(item.Id);
-            }
-
             if (user.LastActive.Date == today)
             {
                 return;
@@ -171,21 +140,13 @@ namespace TaskManagerApp.Services
                 user.Streak = 1;
             }
 
-            user.LastActive = DateTime.Today;
-            await UpdateUserInfo(user);
+            user.LastActive = DateTime.UtcNow;
         }
 
-        public async Task UpdateRank(User item)
+        public async Task UpdateRank(User user)
         {
-            var user = await _userRepository.GetAsync(item.Id);
-            if (user == null)
-            {
-                throw new UserNotFoundException(item.Id);
-            }
-
             var newRank = await _rankRepository.GetRankForPoints(user.Points);
             user.RankId = newRank.Id;
-            await UpdateUserInfo(user);
         }
 
         public async Task UpdatePoints(User item)
@@ -196,7 +157,10 @@ namespace TaskManagerApp.Services
                 throw new UserNotFoundException(item.Id);
             }
             user.Points = item.Points;
-            await UpdateUserInfo(user);
+
+            await UpdateRank(user);
+            await UpdateStreak(user);
+            await _userRepository.UpdateUserInfo(user);
         }
 
 

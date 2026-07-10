@@ -14,10 +14,10 @@ namespace TaskManagerApp.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IUserStatsService _userStatsService;
         private readonly IUserService _userService;
-        public ChallengeService(IChallengeRepository challengeRepository, IUserRepository userRepository, ICategoryRepository categoryRepository, 
+        public ChallengeService(IChallengeRepository challengeRepository, IUserRepository userRepository, ICategoryRepository categoryRepository,
             IUserStatsService userStatsService, IUserService userService)
         {
-            _challengeRepository = challengeRepository; 
+            _challengeRepository = challengeRepository;
             _userRepository = userRepository;
             _categoryRepository = categoryRepository;
             _userStatsService = userStatsService;
@@ -35,7 +35,7 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception($"Challenge with ID {challengeId} doesn't exist.");
             }
-            if (existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId && uc.State ==StateType.Completed).Any())
+            if (existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId && uc.State == StateType.Completed).Any())
             {
                 throw new Exception($"User with ID {userId} has already completed the challenge with ID {challengeId}.");
             }
@@ -44,13 +44,11 @@ namespace TaskManagerApp.Services
                 throw new Exception($"User with ID {userId} hasn't joined the challenge with ID {challengeId}.");
             }
             existingUser.Points += existingChallenge.Points;
-            _userService.UpdatePoints(existingUser);
-            _userService.UpdateRank(existingUser);
-            _userService.UpdateStreak(existingUser);
+            await _userService.UpdatePoints(existingUser);
 
             var userStats = await _userStatsService.ShowUserStatsByIdAsync(userId);
             userStats.ChallengesCompleted += 1;
-            _userStatsService.UpdateUserStatsByIdAsync(existingUser.Id);
+            await _userStatsService.UpdateUserStatsByIdAsync(userStats.UserId);
 
 
             await _challengeRepository.CompleteChallengeAsync(existingChallenge, existingUser);
@@ -68,12 +66,12 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception($"Challenge with ID {challengeId} doesn't exist.");
             }
-            if( existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId).Any())
+            if (existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId).Any())
             {
                 throw new Exception($"User with ID {userId} has already joined the challenge with ID {challengeId}.");
             }
 
-            await _challengeRepository.JoinChallengeAsync(existingChallenge , existingUser);
+            await _challengeRepository.JoinChallengeAsync(existingChallenge, existingUser);
 
         }
 
@@ -100,7 +98,7 @@ namespace TaskManagerApp.Services
         public async Task<List<Challenge>> ShowAllByLevelAsync(int levelNumber)
         {
             var sortedChallenges = await _challengeRepository.GetAllByLevelAsync(levelNumber);
-            if ( sortedChallenges ==null || sortedChallenges.Count ==0 )
+            if (sortedChallenges == null || sortedChallenges.Count == 0)
             {
                 throw new Exception("There are no challenges with the specified level number.");
             }
@@ -133,7 +131,7 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception($"User with ID {userId} has not joined any challenges.");
             }
-            if ( !existingUser.UsersChallenges.Where(uc => uc.State == StateType.Completed ).Any())
+            if (!existingUser.UsersChallenges.Where(uc => uc.State == StateType.Completed).Any())
             {
                 throw new Exception($"User with ID {userId} has not completed any challenges.");
             }
@@ -151,6 +149,26 @@ namespace TaskManagerApp.Services
             }
 
             return existingChallenge;
+        }
+
+        public async Task ChooseRandomChallenges()
+        {
+            int possibleNumberOfActiveChallengesAtOneTime = 3;
+            var currentlyActiveChallenges = await _challengeRepository.GetAllActiveAsync();
+
+            if (currentlyActiveChallenges.Count < possibleNumberOfActiveChallengesAtOneTime)
+            {
+                await _challengeRepository.ChooseRandomChallenges(possibleNumberOfActiveChallengesAtOneTime - currentlyActiveChallenges.Count);
+            }
+
+
+        }
+
+        public async Task RemoveChallengesActivity()
+        {
+            var currentlyActiveChallenges = await _challengeRepository.GetAllActiveAsync();
+
+            await _challengeRepository.RemoveChallengesActivity(currentlyActiveChallenges);
         }
     }
 }

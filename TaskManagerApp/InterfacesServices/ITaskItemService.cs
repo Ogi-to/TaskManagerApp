@@ -6,7 +6,7 @@ namespace TaskManagerApp.InterfacesServices
 {
     public interface ITaskItemService
     {
-        public Task AddTaskAsync(TaskItem task, User user, List<int> categoryIds);
+        public Task AddTaskAsync(TaskItem task, int userId, List<int> categoryIds);
 
         public Task DeleteTaskAsync(int taskId);
         public Task<TaskItem> ShowTaskAsync(int taskId);
@@ -16,6 +16,7 @@ namespace TaskManagerApp.InterfacesServices
 
         public Task CompleteTask(TaskItem task);
         public Task MarkOverdueTasksAsync();
+        public Task DeleteOverdueTasksMoreThanDay();
 
 
     }

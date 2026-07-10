@@ -40,7 +40,7 @@ namespace TaskManagerApp
             builder.Services.AddScoped<IRankService, RankService>();
             builder.Services.AddScoped<IUserStatsService, UserStatsService>();
 
-            builder.Services.AddHostedService<OverdueTaskBackgroundService>();
+            builder.Services.AddHostedService<AppBackgroundService>();
 
             // Swagger
             builder.Services.AddEndpointsApiExplorer();

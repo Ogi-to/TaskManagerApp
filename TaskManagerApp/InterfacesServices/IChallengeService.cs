@@ -13,6 +13,7 @@ namespace TaskManagerApp.InterfacesServices
 
         public Task JoinChallengeAsync(int challengeId, int userId);
         public Task CompleteChallengeAsync(int challengeId, int userId);
-
+        public Task RemoveChallengesActivity();
+        public Task ChooseRandomChallenges();
     }
 }

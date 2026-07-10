@@ -21,7 +21,7 @@ namespace TaskManagerApp.Services
             _categoryRepository = categoryRepository;
             _userStatsService = userStatsService;
         }
-        public async Task AddTaskAsync(TaskItem task, User user, List<int> categoryIds)
+        public async Task AddTaskAsync(TaskItem task, int userId, List<int> categoryIds)
         {
             if (string.IsNullOrWhiteSpace(task.Name))
             {
@@ -56,9 +56,9 @@ namespace TaskManagerApp.Services
 
    
 
-            var existingUser = await _userRepository.GetAsync(user.Id);
+            var existingUser = await _userRepository.GetAsync(userId);
             if (existingUser == null) {
-                throw new UserNotFoundException(user.Id);
+                throw new UserNotFoundException(userId);
             }
             var finalTask = new TaskItem
             {
@@ -180,15 +180,13 @@ namespace TaskManagerApp.Services
 
             existingTask.User.Points += 200;
             await _userService.UpdatePoints(existingTask.User);
-            await _userService.UpdateStreak(existingTask.User);
-            await _userService.UpdateRank(existingTask.User);
 
             var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
             userStats.TasksCompleted += 1;
 
 
 
-            await _userStatsService.UpdateUserStatsByIdAsync(existingTask.UserId);
+            await _userStatsService.UpdateUserStatsByIdAsync(userStats.UserId);
 
             await _taskItemRepository.CompleteTask(existingTask);
 
@@ -205,6 +203,12 @@ namespace TaskManagerApp.Services
                 await _taskItemRepository.UpdateAsync(task);
             }
         }
+
+        public async Task DeleteOverdueTasksMoreThanDay()
+        {
+            await _taskItemRepository.DeleteOverdueTaskMoreThanDay(DateTime.UtcNow);
+        }
+
     }
 }
 

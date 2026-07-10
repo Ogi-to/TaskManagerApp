@@ -10,7 +10,7 @@ namespace TaskManagerApp.Data.Models
         public int Id { get; set; }
 
         [Required]
-        public DateTime Duration {  get; set; }
+        public int DurationDays {  get; set; }
 
         [Required]
         public int Level { get; set; }
@@ -28,6 +28,9 @@ namespace TaskManagerApp.Data.Models
         [Required]
         public string Description { get; set; }
 
+        public DateOnly? StartDate { get; set; } = null;
+
+        public DateOnly? EndDate { get; set; } = null;
 
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 

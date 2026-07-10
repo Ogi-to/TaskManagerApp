@@ -59,6 +59,11 @@ namespace TaskManagerApp.Services
                 smtp.Send(message);
             }
         }
+
+        public async Task DeleteCodes()
+        {
+            await _emailCodeRepository.DeleteExpiredCodesAsync();
+        }
     }
    
 }
