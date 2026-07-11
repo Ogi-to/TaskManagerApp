@@ -18,6 +18,7 @@ namespace TaskManagerApp.Repositories
 
         public User CreateAccount(User item)
         {
+            item.RankId = 1;
             _context.Users.Add(item);
             _context.SaveChanges();
             return item;

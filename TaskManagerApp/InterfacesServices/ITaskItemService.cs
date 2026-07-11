@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Repositories;
 
@@ -6,15 +7,15 @@ namespace TaskManagerApp.InterfacesServices
 {
     public interface ITaskItemService
     {
-        public Task AddTaskAsync(TaskItem task, int userId, List<int> categoryIds);
+        public Task AddTaskAsync(AddTaskDto task);
 
         public Task DeleteTaskAsync(int taskId);
-        public Task<TaskItem> ShowTaskAsync(int taskId);
-        public Task<List<TaskItem>> ShowAllTasksByUserIdAsync(int userId);
+        public Task<TaskDto> GetTaskAsync(int taskId);
+        public Task<List<TaskDto>> ShowAllTasksByUserIdAsync(int userId);
 
-        public Task UpdateTaskAsync(TaskItem task);
+        public Task UpdateTaskAsync(UpdateTaskDto task);
 
-        public Task CompleteTask(TaskItem task);
+        public Task CompleteTask(int taskId);
         public Task MarkOverdueTasksAsync();
         public Task DeleteOverdueTasksMoreThanDay();
 

@@ -33,7 +33,6 @@ namespace TaskManagerApp.Repositories
             return await _context.TaskItems
                    .Include(t => t.TasksCategories)
                        .ThenInclude(tc => tc.Category)
-                   .Include(t => t.UserId)
                    .FirstOrDefaultAsync(t => t.Id == id);
         }
 
@@ -44,30 +43,24 @@ namespace TaskManagerApp.Repositories
         public async Task<List<TaskItem>> GetAllByUserAsync(int userId)
         {
 
-            return await _context.TaskItems
-                    .Where(t => t.UserId == userId)
-                    .Include(t => t.TasksCategories)
-                        .ThenInclude(tc => tc.Category)
-                    .Include(t => t.UserId)
-                   .OrderBy(t => t.EndDate)
-                    .ToListAsync();
+                return await _context.TaskItems
+           .Where(t => t.UserId == userId).ToListAsync();
         }
 
         public async Task<List<TaskItem>> GetAllAsync()
         {
-            return await _context.TaskItems
-                    .Include(t => t.TasksCategories)
-                        .ThenInclude(tc => tc.Category)
-                    .Include(t => t.UserId)
-                    .Include(t => t.StartDate)
-                    .Include(t => t.EndDate)
-                    .ToListAsync();
+                return await _context.TaskItems
+           .Include(t => t.TasksCategories)
+               .ThenInclude(tc => tc.Category)
+           .ToListAsync();
         }
 
 
         public async Task UpdateAsync(TaskItem item)
         {
-            var taskToModify = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == item.Id);
+            var taskToModify = await _context.TaskItems
+    .Include(t => t.TasksCategories)
+    .FirstOrDefaultAsync(t => t.Id == item.Id);
 
             taskToModify.Name = item.Name;
             taskToModify.Description = item.Description;

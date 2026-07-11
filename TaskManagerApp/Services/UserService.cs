@@ -67,9 +67,7 @@ namespace TaskManagerApp.Services
                 Email = registerUserDto.Email,
                 PasswordHash = _hashPasswordService.HashPassword(registerUserDto.Password),
                 UserCode = Random.Shared.Next(10000000, 99999999).ToString(),
-                RankId = registerUserDto.RankId,
-                IsEmailVerified = false
-
+                IsEmailVerified = false,
             };
 
             Console.WriteLine("Before saving user");

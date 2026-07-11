@@ -20,8 +20,6 @@ namespace TaskManagerApp.DTOS
 
         public string UserCode { get; set; } = string.Empty;
 
-        public int RankId { get; set; } = 1;
-
         public bool IsEmailVerified { get; set; } = false;
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
@@ -21,14 +22,11 @@ namespace TaskManagerApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddTask([FromBody] AddTaskRequest request)
+        public async Task<IActionResult> AddTask([FromBody] AddTaskDto task)
         {
-            await _taskItemService.AddTaskAsync(
-                request.Task,
-                request.User.Id,
-                request.CategoryIds);
+            await _taskItemService.AddTaskAsync(task);
 
-            return Ok("Task added successfully.");
+            return Created();
         }
 
         [HttpDelete("{id}")]
@@ -42,7 +40,7 @@ namespace TaskManagerApp.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTask(int id)
         {
-            var task = await _taskItemService.ShowTaskAsync(id);
+            var task = await _taskItemService.GetTaskAsync(id);
 
             return Ok(task);
         }
@@ -56,17 +54,17 @@ namespace TaskManagerApp.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateTask([FromBody] TaskItem task)
+        public async Task<IActionResult> UpdateTask([FromBody] UpdateTaskDto dto)
         {
-            await _taskItemService.UpdateTaskAsync(task);
+            await _taskItemService.UpdateTaskAsync(dto);
 
             return Ok("Task updated successfully.");
         }
 
         [HttpPut("complete")]
-        public async Task<IActionResult> CompleteTask([FromBody] TaskItem task)
+        public async Task<IActionResult> CompleteTask([FromBody] int taskId)
         {
-            await _taskItemService.CompleteTask(task);
+            await _taskItemService.CompleteTask(taskId);
 
             return Ok("Task completed.");
         }
