@@ -140,6 +140,8 @@ namespace TaskManagerApp.Services
                 Description = task.Description,
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
+                State = task.State,
+                UserId = task.Id,
                 Categories = task.TasksCategories
                     .Select(tc => tc.Category.Name)
                     .ToList()

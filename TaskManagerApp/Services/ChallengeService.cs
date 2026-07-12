@@ -1,5 +1,6 @@
 ﻿//using Org.BouncyCastle.Asn1.Cmp; nqmam predstawa otkyde doide
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
@@ -69,17 +70,34 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception($"User with ID {userId} has already joined the challenge with ID {challengeId}.");
             }
+            if (existingChallenge.StartDate == default || existingChallenge.EndDate == default)
+            {
+                throw new Exception("Challenge has not started!");
+            }
 
             await _challengeRepository.JoinChallengeAsync(existingChallenge.Id, existingUser.Id);
 
         }
 
-        public async Task<List<Challenge>> ShowAllAsync()
+        public async Task<List<ChallengeDto>> ShowAllAsync()
         {
-            return await _challengeRepository.GetAllAsync();
+            var challenges = await _challengeRepository.GetAllAsync();
+            return challenges.Select(c => new ChallengeDto
+            {
+                Id = c.Id,
+                Title = c.Title,
+                DurationDays = c.DurationDays,
+                Level = c.Level,
+                CategoryId = c.CategoryId,
+                Trophy = c.Trophy,
+                Points = c.Points,
+                Description = c.Description,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate
+            }).ToList();
         }
 
-        public async Task<List<Challenge>> ShowAllByCategoryAsync(int categoryId)
+        public async Task<List<ChallengeDto>> ShowAllByCategoryAsync(int categoryId)
         {
             var existingCategory = await _categoryRepository.GetAsync(categoryId);
             if (existingCategory == null)
@@ -91,20 +109,44 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception("There are no challenges from this category.");
             }
-            return sortedChallenges;
+            return sortedChallenges.Select(c => new ChallengeDto
+            {
+                Id = c.Id,
+                Title = c.Title,
+                DurationDays = c.DurationDays,
+                Level = c.Level,
+                CategoryId = c.CategoryId,
+                Trophy = c.Trophy,
+                Points = c.Points,
+                Description = c.Description,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate
+            }).ToList();
         }
 
-        public async Task<List<Challenge>> ShowAllByLevelAsync(int levelNumber)
+        public async Task<List<ChallengeDto>> ShowAllByLevelAsync(int levelNumber)
         {
             var sortedChallenges = await _challengeRepository.GetAllByLevelAsync(levelNumber);
             if (sortedChallenges == null || sortedChallenges.Count == 0)
             {
                 throw new Exception("There are no challenges with the specified level number.");
             }
-            return sortedChallenges;
+            return sortedChallenges.Select(c => new ChallengeDto
+            {
+                Id = c.Id,
+                Title = c.Title,
+                DurationDays = c.DurationDays,
+                Level = c.Level,
+                CategoryId = c.CategoryId,
+                Trophy = c.Trophy,
+                Points = c.Points,
+                Description = c.Description,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate
+            }).ToList();
         }
 
-        public async Task<List<Challenge>> ShowAllByUserAsync(int userId)
+        public async Task<List<ChallengeDto>> ShowAllByUserAsync(int userId)
         {
             var existingUser = await _userRepository.GetAsync(userId);
             if (existingUser == null)
@@ -116,10 +158,23 @@ namespace TaskManagerApp.Services
                 throw new Exception($"User with ID {userId} has not joined any challenges.");
             }
 
-            return await _challengeRepository.GetChallengesByUserAsync(userId);
+            var challenges = await _challengeRepository.GetChallengesByUserAsync(userId);
+            return challenges.Select(c => new ChallengeDto
+            {
+                Id = c.Id,
+                Title = c.Title,
+                DurationDays = c.DurationDays,
+                Level = c.Level,
+                CategoryId = c.CategoryId,
+                Trophy = c.Trophy,
+                Points = c.Points,
+                Description = c.Description,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate
+            }).ToList();
         }
 
-        public async Task<List<Challenge>> ShowAllCompletedByUserAsync(int userId)
+        public async Task<List<ChallengeDto>> ShowAllCompletedByUserAsync(int userId)
         {
             var existingUser = await _userRepository.GetAsync(userId);
             if (existingUser == null)
@@ -135,11 +190,23 @@ namespace TaskManagerApp.Services
                 throw new Exception($"User with ID {userId} has not completed any challenges.");
             }
 
-            return await _challengeRepository.GetAllCompletedByUserAsync(userId);
-
+            var completedChallenges = await _challengeRepository.GetAllCompletedByUserAsync(userId);
+            return completedChallenges.Select(c => new ChallengeDto
+            {
+                Id = c.Id,
+                Title = c.Title,
+                DurationDays = c.DurationDays,
+                Level = c.Level,
+                CategoryId = c.CategoryId,
+                Trophy = c.Trophy,
+                Points = c.Points,
+                Description = c.Description,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate
+            }).ToList();
         }
 
-        public async Task<Challenge> ShowAsync(int challengeId)
+        public async Task<ChallengeDto> ShowAsync(int challengeId)
         {
             var existingChallenge = await _challengeRepository.GetAsync(challengeId);
             if (existingChallenge == null)
@@ -147,7 +214,19 @@ namespace TaskManagerApp.Services
                 throw new Exception($"Challenge with ID {challengeId} not found.");
             }
 
-            return existingChallenge;
+            return new ChallengeDto
+            {
+                Id = existingChallenge.Id,
+                Title = existingChallenge.Title,
+                DurationDays = existingChallenge.DurationDays,
+                Level = existingChallenge.Level,
+                CategoryId = existingChallenge.CategoryId,
+                Trophy = existingChallenge.Trophy,
+                Points = existingChallenge.Points,
+                Description = existingChallenge.Description,
+                StartDate = existingChallenge.StartDate,
+                EndDate = existingChallenge.EndDate
+            };
         }
 
         public async Task ChooseRandomChallenges()

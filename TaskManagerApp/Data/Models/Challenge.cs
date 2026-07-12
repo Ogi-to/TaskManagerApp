@@ -12,6 +12,8 @@ namespace TaskManagerApp.Data.Models
         [Required]
         public int DurationDays {  get; set; }
 
+        public string Title { get; set; }
+
         [Required]
         public int Level { get; set; }
 
