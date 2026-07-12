@@ -33,7 +33,7 @@ namespace TaskManagerApp.Data.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public DateTime LastActive {  get; set; } = DateTime.UtcNow.Date;
+        public DateTime? LastActive {  get; set; }
         [Required]
         [StringLength(8)]
         public string UserCode { get; set; }

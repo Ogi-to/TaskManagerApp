@@ -12,9 +12,9 @@ namespace TaskManagerApp.Repositories
         {
             _context = context;
         }
-        public async Task CompleteChallengeAsync(Challenge challenge, User user)
+        public async Task CompleteChallengeAsync(int challengeId, int userId)
         {
-            var userChallenge = await _context.UsersChallenges.Where(uc => uc.ChallengeId == challenge.Id && uc.UserId == user.Id).Include(uc => uc.Challenge).FirstOrDefaultAsync();
+            var userChallenge = await _context.UsersChallenges.Where(uc => uc.ChallengeId == challengeId && uc.UserId == userId).Include(uc => uc.Challenge).FirstOrDefaultAsync();
             var challengeToComplete = userChallenge.Challenge;
             userChallenge.State = StateType.Completed;
             await _context.SaveChangesAsync();
@@ -52,12 +52,12 @@ namespace TaskManagerApp.Repositories
             return await _context.UsersChallenges.Where(uc => uc.UserId == userId).Select(uc => uc.Challenge).ToListAsync();
         }
 
-        public async Task JoinChallengeAsync(Challenge challenge, User user)
+        public async Task JoinChallengeAsync(int challengeId, int userId)
         {
             UsersChallenges userChallenge = new UsersChallenges
             {
-                UserId = user.Id,
-                ChallengeId = challenge.Id,
+                UserId = userId,
+                ChallengeId = challengeId,
                 State = StateType.InProgress
             };
             await _context.UsersChallenges.AddAsync(userChallenge);

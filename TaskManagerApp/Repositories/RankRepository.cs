@@ -21,9 +21,9 @@ namespace TaskManagerApp.Repositories
             return await _context.Ranks.ToListAsync();
         }
 
-        public Task<Rank> GetRankForPoints(int points)
+        public async Task<Rank> GetRankForPoints(int points)
         {
-            return _context.Ranks.Where(r => r.StartPoints <= points && r.EndPoints > points).FirstOrDefaultAsync();
+            return await _context.Ranks.Where(r => r.StartPoints <= points && r.EndPoints > points).FirstOrDefaultAsync();
         }
     }
 }

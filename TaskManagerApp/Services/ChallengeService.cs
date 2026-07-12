@@ -43,15 +43,14 @@ namespace TaskManagerApp.Services
             {
                 throw new Exception($"User with ID {userId} hasn't joined the challenge with ID {challengeId}.");
             }
-            existingUser.Points += existingChallenge.Points;
-            await _userService.UpdatePoints(existingUser);
+            await _userService.UpdatePoints(existingUser.Id, existingChallenge.Points);
 
             var userStats = await _userStatsService.ShowUserStatsByIdAsync(userId);
             userStats.ChallengesCompleted += 1;
-            await _userStatsService.UpdateUserStatsByIdAsync(userStats.UserId);
+            await _userStatsService.UpdateUserStatsAsync(userStats);
 
 
-            await _challengeRepository.CompleteChallengeAsync(existingChallenge, existingUser);
+            await _challengeRepository.CompleteChallengeAsync(existingChallenge.Id, existingUser.Id);
         }
 
         public async Task JoinChallengeAsync(int challengeId, int userId)
@@ -71,7 +70,7 @@ namespace TaskManagerApp.Services
                 throw new Exception($"User with ID {userId} has already joined the challenge with ID {challengeId}.");
             }
 
-            await _challengeRepository.JoinChallengeAsync(existingChallenge, existingUser);
+            await _challengeRepository.JoinChallengeAsync(existingChallenge.Id, existingUser.Id);
 
         }
 

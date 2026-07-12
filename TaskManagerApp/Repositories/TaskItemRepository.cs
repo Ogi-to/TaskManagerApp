@@ -20,8 +20,9 @@ namespace TaskManagerApp.Repositories
             
         }
 
-        public async Task DeleteAsync(TaskItem item)
+        public async Task DeleteAsync(int itemId)
         {
+            var item = await _context.TaskItems.FindAsync(itemId);
             // the delete behaviour in "on model creating" is restrict, so the relationships have to be updated manually
             _context.TasksCategories.RemoveRange(item.TasksCategories);
             _context.TaskItems.Remove(item);
@@ -92,9 +93,9 @@ namespace TaskManagerApp.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task CompleteTask(TaskItem item)
+        public async Task CompleteTask(int taskId)
         {
-            var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == item.Id);
+            var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
             task.State = StateType.Completed;
 
 

@@ -92,7 +92,7 @@ namespace TaskManagerApp.Services
                 throw new TaskItemNotFoundException();
             }
              
-            await _taskItemRepository.DeleteAsync(taskToDelete);
+            await _taskItemRepository.DeleteAsync(taskToDelete.Id);
 
         }
 
@@ -214,18 +214,22 @@ namespace TaskManagerApp.Services
             }
 
             var existingUser = await _userRepository.GetAsync(existingTask.UserId);
+            if (existingUser == null)
+            {
+                throw new UserNotAssignedToTaskException();
+            }
 
-            existingUser.Points += 200;
-            await _userService.UpdatePoints(existingUser);
+            var taskPoints = 200; // Assuming each completed task gives 200 points
+            await _userService.UpdatePoints(existingUser.Id, taskPoints);
 
             var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
             userStats.TasksCompleted += 1;
 
 
 
-            await _userStatsService.UpdateUserStatsByIdAsync(userStats.UserId);
+            await _userStatsService.UpdateUserStatsAsync(userStats);
 
-            await _taskItemRepository.CompleteTask(existingTask);
+            await _taskItemRepository.CompleteTask(existingTask.Id);
 
 
         }

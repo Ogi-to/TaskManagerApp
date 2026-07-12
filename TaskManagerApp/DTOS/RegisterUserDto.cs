@@ -18,8 +18,5 @@ namespace TaskManagerApp.DTOS
         [MinLength(8)]
         public string Password { get; set; }
 
-        public string UserCode { get; set; } = string.Empty;
-
-        public bool IsEmailVerified { get; set; } = false;
     }
 }
