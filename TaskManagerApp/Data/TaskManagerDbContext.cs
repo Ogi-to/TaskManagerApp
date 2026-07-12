@@ -8,9 +8,6 @@ namespace TaskManagerApp.Data
         public TaskManagerDbContext(DbContextOptions<TaskManagerDbContext> options) : base(options)
         {
         }
-        public TaskManagerDbContext()
-        {
-        }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,22 +37,6 @@ namespace TaskManagerApp.Data
                 .HasOne(ur => ur.RelatedUser)
                 .WithMany(u => u.ReceivedRelations)
                 .HasForeignKey(ur => ur.RelatedUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            //For TASKS USERS
-            modelBuilder.Entity<UsersTasks>()
-                .HasKey(tu => new { tu.TaskId, tu.UserId });
-
-            modelBuilder.Entity<UsersTasks>()
-                .HasOne(tu => tu.Task)
-                .WithMany(t => t.UsersTasks)
-                .HasForeignKey(tu => tu.TaskId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<UsersTasks>()
-                .HasOne(tu => tu.User)
-                .WithMany(u => u.UsersTasks)
-                .HasForeignKey(tu => tu.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             //For CHALLENGES USERS
@@ -106,7 +87,6 @@ namespace TaskManagerApp.Data
         public DbSet<Challenge> Challenges { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Rank> Ranks { get; set; }
-        public DbSet<UsersTasks> UsersTasks { get; set; }
         public DbSet<TasksCategories> TasksCategories { get; set; }
         public DbSet<UsersChallenges> UsersChallenges { get; set; }
         public DbSet<UsersRelations> UsersRelations { get; set; }

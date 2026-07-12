@@ -11,16 +11,21 @@ namespace TaskManagerApp.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRankRepository _rankRepository;
         private readonly IEmailCodeRepository _emailCodeRepository;
         private readonly IEmailCodeService _emailCodeService;
         private readonly HashPasswordService _hashPasswordService;
+        private readonly IUserStatsService _userStatsService;
 
-        public UserService(IUserRepository userRepository, IEmailCodeRepository emailCodeRepository , IEmailCodeService emailCodeService, HashPasswordService hashPasswordService)
+        public UserService(IUserRepository userRepository, IRankRepository rankRepository, IEmailCodeRepository emailCodeRepository, 
+            IEmailCodeService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService)
         {
             _userRepository = userRepository;
+            _rankRepository = rankRepository;
             _emailCodeRepository = emailCodeRepository;
             _emailCodeService = emailCodeService;
             _hashPasswordService = hashPasswordService;
+            _userStatsService = userStatsService;
         }
         public async Task<UserDto> GetUserById(int id)
         {
@@ -48,12 +53,12 @@ namespace TaskManagerApp.Services
 
         public async Task RegisterUser(RegisterUserDto registerUserDto)
         {
-            var testUser = _userRepository.GetByUsername(registerUserDto.Username);
+            var testUser = await _userRepository.GetByUsernameAsync(registerUserDto.Username);
             if (testUser != null)
             {
                 throw new UserNameAlreadyExistsException();
             }
-            testUser = _userRepository.GetByEmail(registerUserDto.Email);
+            testUser = await _userRepository.GetByEmailAsync(registerUserDto.Email);
             if (testUser != null)
             {
                 throw new UserEmailAlreadyExistsException();
@@ -65,21 +70,20 @@ namespace TaskManagerApp.Services
                 Email = registerUserDto.Email,
                 PasswordHash = _hashPasswordService.HashPassword(registerUserDto.Password),
                 UserCode = Random.Shared.Next(10000000, 99999999).ToString(),
-                RankId = registerUserDto.RankId,
-                IsEmailVerified = false
+                IsEmailVerified = false,
+                LastActive = null,
+            }; ;
 
-            };
+            
 
-            Console.WriteLine("Before saving user");
-            _userRepository.CreateAccount(user);
-            Console.WriteLine("After saving user");
-
+            await _userRepository.CreateAccountAsync(user);
+            await _userStatsService.CreateUserStatsAsync(user.Id);
             await _emailCodeService.SendVerificationCode(user.Email);
         }
 
         public async Task<UserDto> LogInUser(LoginUserDto loginUserDto)
         {
-            var testUser = _userRepository.GetByEmail(loginUserDto.Email);
+            var testUser = await _userRepository.GetByEmailAsync(loginUserDto.Email);
             if (testUser == null)
             {
                 throw new EmailorPasswordNotFoundException();
@@ -111,23 +115,78 @@ namespace TaskManagerApp.Services
             };
         }
 
-        
-
-        public async Task<bool> VerifyEmail(string email, string code)
+        public async Task DeleteAccount(int userId)
         {
-            var isVerified = await _emailCodeService.VerifyEmail(email, code);
+            var user = await _userRepository.GetAsync(userId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(userId);
+            }
+            await _userRepository.DeleteAccountAsync(user.Id);
+        }
+
+        public async Task UpdateStreak(User user)
+        {
+          
+            var today = DateTime.UtcNow.Date;
+            if (user.LastActive?.Date == today)
+            {
+                return;
+            }
+
+            if (user.LastActive?.Date == today.AddDays(-1))
+            {
+                user.Streak += 1;
+            }
+            else
+            {
+                user.Streak = 1;
+            }
+
+            user.LastActive = DateTime.UtcNow;
+        }
+
+        public async Task UpdateRank(User user)
+        {
+            
+            var newRank = await _rankRepository.GetRankForPoints(user.Points);
+            if (newRank == null)
+            {
+                throw new Exception("No rank found for the given points.");
+            }
+            user.RankId = newRank.Id;
+        }
+
+        public async Task UpdatePoints(int userId, int points)
+        {
+            var user = await _userRepository.GetAsync(userId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(userId);
+            }
+            user.Points += points;
+
+
+            await UpdateRank(user);
+            await UpdateStreak(user);
+            await _userRepository.UpdateUserInfoAsync(user);
+        }
+
+
+        public async Task VerifyEmail(VerifyEmailDto verifyEmailDto)
+        {
+            var isVerified = await _emailCodeService.VerifyEmail(verifyEmailDto.Email, verifyEmailDto.Code);
             if (!isVerified)
             {
                 throw new InvalidVerificationCodeException();
             }
-            var user = _userRepository.GetByEmail(email);
+            var user = await _userRepository.GetByEmailAsync(verifyEmailDto.Email);
             if (user == null)
             {
                 throw new EmailorPasswordNotFoundException();
             }
             user.IsEmailVerified = true;
-            _userRepository.UpdateAccountInfo(user);
-            return true;
+            await _userRepository.UpdateAccountInfoAsync(user);
         }
     }
 }

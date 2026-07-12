@@ -6,23 +6,24 @@ namespace TaskManagerApp.Interfaces
     {
         public Task<User?> GetAsync(int id);
 
-        public List<User> GetAllUsers();
-        public User GetByEmail(string email);
-        public User GetByUsername(string username);
-        public User GetByUserCode(string userCode);
-        public UsersRelations GetRelation(int initiatorId, int relatedUserId);
+        public Task<List<User>> GetAllUsersAsync();
+        public Task<User?> GetByEmailAsync(string email);
+        public Task<User?> GetByUsernameAsync(string username);
+        public Task<User?> GetByUserCodeAsync(string userCode);
+        public Task<UsersRelations?> GetRelationAsync(int initiatorId, int relatedUserId);
 
-        public User CreateAccount(User item);
+        public Task<User> CreateAccountAsync(User item);
+        public Task DeleteAccountAsync(int id);
 
-        public void UpdateAccountInfo(User item);
+        public Task UpdateAccountInfoAsync(User item);
 
-        public void UpdateUserInfo(User item);
+        public Task UpdateUserInfoAsync(User item);
 
-        public void SendRequest(UsersRelations relation);
+        public Task SendRequestAsync(UsersRelations relation);
 
-        public bool RespondToRequest(UsersRelations relation);
+        public Task<bool> RespondToRequestAsync(UsersRelations relation);
 
-        public List<User> GetFriendsList(User item);
+        public Task<List<User>> GetFriendsListAsync(User item);
 
 
 

@@ -33,14 +33,14 @@ namespace TaskManagerApp.Data.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public DateTime LastActive {  get; set; } = DateTime.UtcNow.Date;
+        public DateTime? LastActive {  get; set; }
         [Required]
         [StringLength(8)]
         public string UserCode { get; set; }
 
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
-        public List<UsersTasks> UsersTasks { get; set; } = new List<UsersTasks>();
+        public List<TaskItem> TaskItems { get; set; }
 
         public List<UsersRelations> SentRelations { get; set; } = new List<UsersRelations>();
 

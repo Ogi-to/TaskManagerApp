@@ -65,10 +65,55 @@
             {
                 await HandleError(context, 403, ex.Message);
             }
+            catch (EmptyTaskNameException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(IncorrectTaskEndDateException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (NoTaskCategoryException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(NoTaskEndDateException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (NoTaskStartDateException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(TaskAlreadyCompletedException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(TaskAlreadyOverdueException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(UnnecessaryUpdateOperationException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
+            catch(UserAlreadyHasThisTaskException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (UserDoesntHaveTasksException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (UserNotAssignedToTaskException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
             catch (Exception ex)
             {
                 await HandleError(context, 500, ex.Message);
             }
+           
         }
     }
 }

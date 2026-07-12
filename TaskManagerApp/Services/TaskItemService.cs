@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
@@ -10,61 +11,75 @@ namespace TaskManagerApp.Services
     {
         private readonly ITaskItemRepository _taskItemRepository;
         private readonly IUserRepository _userRepository;
-        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository)
+        private readonly IUserService _userService;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IUserStatsService _userStatsService;
+        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService, ICategoryRepository categoryRepository, IUserStatsService userStatsService)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;
-
+            _userService = userService;
+            _categoryRepository = categoryRepository;
+            _userStatsService = userStatsService;
         }
-        public async Task AddTaskAsync(TaskItem task)
+        public async Task AddTaskAsync(AddTaskDto task)
         {
             if (string.IsNullOrWhiteSpace(task.Name))
             {
-                throw new Exception("Task name cannot be empty.");
+                throw new EmptyTaskNameException();
             }
-            if (task.StartDate == null)
+            if (task.StartDate == default)
             {
-                throw new Exception("Task must have a start date.");
+                throw new NoTaskStartDateException();
             }
-            if (task.EndDate == null)
+            //if (task.EndDate == null)
+            //{
+            //throw new NoTaskEndDateException();
+            //}
+            if (task.EndDate != default)
             {
-                throw new Exception("Task must have an end date.");
-            }
-            if (task.EndDate < task.StartDate)
-            {
-                throw new Exception("Task end date cannot be before the start date.");
-            }
-            if (task.EndDate <= DateTime.Now)
-            {
-                throw new Exception("Task end date must be in the future.");
-            }
-            
-
-            await _taskItemRepository.AddTaskAsync(task);
-
-
-        }
-
-        public async Task AddUserAsync(TaskItem task, User user)
-        {
-            var existingTask = await _taskItemRepository.GetAsync(task.Id);
-            if (existingTask == null)
-            {
-                throw new TaskItemNotFoundException();
+                if (task.EndDate < task.StartDate)
+                {
+                    throw new IncorrectTaskEndDateException();
+                }
+                if (task.EndDate <= DateTime.UtcNow)
+                {
+                    throw new IncorrectTaskEndDateException();
+                }
             }
 
-            var existingUser = await _userRepository.GetAsync(user.Id);
-            if (existingUser == null)
+            var categories = await _categoryRepository.GetByIdsAsync(task.CategoryIds);
+
+            if (categories.Count != task.CategoryIds.Count)
             {
-                throw new UserNotFoundException(user.Id);
+                throw new Exception("These categories do not exist.");
             }
 
-            if (existingTask.UsersTasks.Any(ut => ut.UserId == existingUser.Id))
+   
+
+            var existingUser = await _userRepository.GetAsync(task.UserId);
+            if (existingUser == null) {
+                throw new UserNotFoundException(task.UserId);
+            }
+            var finalTask = new TaskItem
             {
-                throw new Exception($"User with ID {existingUser.Id} is already assigned to the task with ID {existingTask.Id}.");
+                Name = task.Name,
+                Description = task.Description,
+                StartDate = task.StartDate,
+                EndDate = task.EndDate,
+                UserId = existingUser.Id,
+            };
+            foreach (var categoryId in task.CategoryIds)
+            {
+                finalTask.TasksCategories.Add(new TasksCategories
+                {
+                    CategoryId = categoryId
+                });
             }
 
-            await _taskItemRepository.AssignToUserAsync(existingTask, existingUser);
+
+            await _taskItemRepository.AddTaskAsync(finalTask);
+
 
         }
 
@@ -77,27 +92,113 @@ namespace TaskManagerApp.Services
                 throw new TaskItemNotFoundException();
             }
              
-            await _taskItemRepository.DeleteAsync(taskToDelete);
+            await _taskItemRepository.DeleteAsync(taskToDelete.Id);
 
         }
 
-        public async Task<List<TaskItem>> ShowAllTasksByUserIdAsync(int userId)
+        public async Task<List<TaskDto>> ShowAllTasksByUserIdAsync(int userId)
         {
             var existingUser = await _userRepository.GetAsync(userId);
             if (existingUser == null)
             {
                 throw new UserNotFoundException(userId);
             }
-            var tasks = await _taskItemRepository.GetAllByUserAsync(userId);
+            var tasks = await _taskItemRepository.GetAllByUserAsync(existingUser.Id);
             if (!tasks.Any())
             {
-                throw new Exception($"No tasks found for user with ID {userId}.");
+                throw new UserDoesntHaveTasksException();
             }
 
-            return tasks;
+            return tasks.Select(t => new TaskDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                StartDate = t.StartDate,
+                EndDate = t.EndDate,
+                State = t.State,
+                UserId = t.UserId,
+                Categories = t.TasksCategories
+            .Select(tc => tc.Category.Name)
+            .ToList()
+            }).ToList();
         }
 
-        public async Task<TaskItem> ShowTaskAsync(int taskId)
+        public async Task<TaskDto> GetTaskAsync(int id)
+        {
+            var task = await _taskItemRepository.GetAsync(id);
+
+            if (task == null)
+            {
+                throw new TaskItemNotFoundException();
+            }
+
+            var dto = new TaskDto
+            {
+                Id = task.Id,
+                Name = task.Name,
+                Description = task.Description,
+                StartDate = task.StartDate,
+                EndDate = task.EndDate,
+                State = task.State,
+                UserId = task.Id,
+                Categories = task.TasksCategories
+                    .Select(tc => tc.Category.Name)
+                    .ToList()
+            };
+
+            return dto;
+        }
+
+        public async Task UpdateTaskAsync(UpdateTaskDto dto)
+        {
+            var existingTask = await _taskItemRepository.GetAsync(dto.Id);
+            if (existingTask == null)
+            {
+                throw new TaskItemNotFoundException();
+            }
+
+            if (AreTasksEqual(existingTask, dto))
+            {
+                throw new UnnecessaryUpdateOperationException();
+            }
+            existingTask.Name = dto.Name;
+            existingTask.Description = dto.Description;
+            existingTask.StartDate = dto.StartDate;
+            existingTask.EndDate = dto.EndDate;
+            existingTask.State = dto.State;
+
+            existingTask.TasksCategories = dto.CategoryIds.Select(categoryId => new TasksCategories
+            {
+                TaskId = existingTask.Id,
+                CategoryId = categoryId
+            }).ToList();
+
+            await _taskItemRepository.UpdateAsync(existingTask);
+        }
+            
+        //used in updateTaskAsync
+        private static bool AreTasksEqual(TaskItem existing,UpdateTaskDto updated )
+        {
+            bool scalarFieldsEqual = existing.Name == updated.Name &&
+                existing.Description == updated.Description &&
+                existing.StartDate == updated.StartDate &&
+                existing.EndDate == updated.EndDate;
+
+            if (scalarFieldsEqual == false)
+            {
+                return false;
+            }
+
+            var existingCategoryIds = existing.TasksCategories.Select(tc => tc.CategoryId).ToList();
+            var newCategoryIds = updated.CategoryIds;
+
+            bool categoriesEqual = existingCategoryIds.Count == newCategoryIds.Count && !existingCategoryIds.Except(newCategoryIds).Any();
+
+            return  categoriesEqual;
+        }
+
+        public async Task CompleteTask(int taskId)
         {
             var existingTask = await _taskItemRepository.GetAsync(taskId);
             if (existingTask == null)
@@ -105,49 +206,52 @@ namespace TaskManagerApp.Services
                 throw new TaskItemNotFoundException();
             }
 
-            return existingTask;
+            if(existingTask.State == StateType.Completed)
+            {
+                throw new TaskAlreadyCompletedException();
+            }
+            if (existingTask.State == StateType.Overdue)
+            {
+                throw new TaskAlreadyOverdueException();
+            }
+
+            var existingUser = await _userRepository.GetAsync(existingTask.UserId);
+            if (existingUser == null)
+            {
+                throw new UserNotAssignedToTaskException();
+            }
+
+            var taskPoints = 200; // Assuming each completed task gives 200 points
+            await _userService.UpdatePoints(existingUser.Id, taskPoints);
+
+            var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
+            userStats.TasksCompleted += 1;
+
+
+
+            await _userStatsService.UpdateUserStatsAsync(userStats);
+
+            await _taskItemRepository.CompleteTask(existingTask.Id);
+
+
         }
 
-        public async Task UpdateTaskAsync(TaskItem task)
+        public async Task MarkOverdueTasksAsync()
         {
-            var existingTask = await _taskItemRepository.GetAsync(task.Id);
-            if (existingTask == null)
-            {
-                throw new TaskItemNotFoundException();
-            }
+            var overdueTasks = await _taskItemRepository.GetTasksPastDueAsync(DateTime.UtcNow);
 
-            if (AreTasksEqual(existingTask, task))
+            foreach (var task in overdueTasks)
             {
-                throw new Exception("No changes are detected. Update operation is not necessary.");
+                task.State = StateType.Overdue;
+                await _taskItemRepository.UpdateAsync(task);
             }
-
-            await _taskItemRepository.UpdateAsync(task);
         }
-            
-        //used in updateTaskAsync
-        private static bool AreTasksEqual(TaskItem existing,TaskItem updated )
+
+        public async Task DeleteOverdueTasksMoreThanDay()
         {
-            bool scalarFieldsEqual = existing.Name == updated.Name &&
-                existing.Description == updated.Description &&
-                existing.StartDate == updated.StartDate &&
-                existing.EndDate == updated.EndDate &&
-                existing.StateId == updated.StateId;
-
-            if (scalarFieldsEqual == false)
-            {
-                return false;
-            }
-             
-            var existingUserIds = existing.UsersTasks.Select(ut => ut.UserId).ToList();
-            var newUserIds = updated.UsersTasks.Select(ut => ut.UserId).ToList();
-            bool usersEqual = existingUserIds.Count == newUserIds.Count && !existingUserIds.Except(newUserIds).Any();
-
-            var existingCategoryIds = existing.TasksCategories.Select(tc => tc.CategoryId).ToList();
-            var newCategoryIds = updated.TasksCategories.Select(tc => tc.CategoryId).ToList();
-            bool categoriesEqual = existingCategoryIds.Count == newCategoryIds.Count && !existingCategoryIds.Except(newCategoryIds).Any();
-
-            return usersEqual && categoriesEqual;
+            await _taskItemRepository.DeleteOverdueTaskMoreThanDay(DateTime.UtcNow);
         }
+
     }
 }
 

@@ -2,7 +2,7 @@
 
 namespace TaskManagerApp.DTOS
 {
-    public class RegisterUserDto
+    public class UpdateAccountDto
     {
         [Required]
         [StringLength(50, MinimumLength = 3)]
@@ -12,11 +12,5 @@ namespace TaskManagerApp.DTOS
         [Required]
         [EmailAddress]
         public string Email { get; set; }
-
-
-        [Required]
-        [MinLength(8)]
-        public string Password { get; set; }
-
     }
 }

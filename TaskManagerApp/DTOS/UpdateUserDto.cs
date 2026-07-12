@@ -1,16 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace TaskManagerApp.DTOS
+﻿namespace TaskManagerApp.DTOS
 {
     public class UpdateUserDto
     {
-        [Required]
-        [StringLength(50, MinimumLength = 3)]
-        public string Username { get; set; }
-
-
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        public int Streak { get; set; }
+        public int Points { get; set; }
+        public int RankId { get; set; }
+        public DateTime LastActive { get; set; }
     }
 }

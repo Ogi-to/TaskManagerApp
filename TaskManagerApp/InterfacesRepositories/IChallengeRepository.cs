@@ -11,9 +11,11 @@ namespace TaskManagerApp.Interfaces
         public Task<List<Challenge>> GetAllCompletedByUserAsync(int userId);
         public Task<List<Challenge>> GetChallengesByUserAsync(int userId);
 
-        public Task JoinChallengeAsync(Challenge challenge, User user);
-        public Task CompleteChallengeAsync(Challenge challenge, User user);
+        public Task JoinChallengeAsync(int challengeId, int userId);
+        public Task CompleteChallengeAsync(int challengeId, int userId);
+        public Task<List<Challenge>> ChooseRandomChallenges(int numberOfChallengesToGet);
 
-
+        public Task RemoveChallengesActivity(List<Challenge> challenges);
+        public Task<List<Challenge>> GetAllActiveAsync();
     }
 }

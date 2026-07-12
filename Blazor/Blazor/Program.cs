@@ -19,15 +19,7 @@ namespace Blazor
 
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents()
-                .AddInteractiveWebAssemblyComponents();
-
-            builder.Services.AddScoped(sp =>
-            {
-                return new HttpClient
-                {
-                    BaseAddress = new Uri("https://localhost:5281/")
-                };
-            });
+                .AddInteractiveWebAssemblyComponents();;
 
             var app = builder.Build();
 

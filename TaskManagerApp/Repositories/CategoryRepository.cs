@@ -14,11 +14,16 @@ namespace TaskManagerApp.Repositories
         }
         public async Task<Category> GetAsync(int categoryId )
         {
-            return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).FirstOrDefaultAsync(c => c.Id == item.Id);
+            return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).FirstOrDefaultAsync(c => c.Id == categoryId);
         }
         public async Task<List<Category>> GetAllAsync()
         {
             return await _context.Categories.Include(c => c.TasksCategories).ThenInclude(tc => tc.Task).ToListAsync();
+        }
+
+        public Task<List<Category>> GetByIdsAsync(List<int> categoryIds)
+        {
+            return _context.Categories.Where(c => categoryIds.Contains(c.Id)).ToListAsync();
         }
     }
 }

@@ -22,76 +22,60 @@ namespace TaskManagerApp.Controllers
             _userService = userService;
         }
 
+        // GET: api/User/5
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<UserDto>> GetUserById(int id)
+        {
+            var user = await _userService.GetUserById(id);
+            return Ok(user);
+        }
+
+        // POST: api/User/register
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerUserDto)
         {
-            try
+            await _userService.RegisterUser(registerUserDto);
+            return Ok(new
             {
-                await _userService.RegisterUser(dto);
-                return Ok(new { message = "User registered successfully" });
-            }
-            catch (UserNameAlreadyExistsException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (UserEmailAlreadyExistsException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+                Message = "Registration successful. Please verify your email."
+            });
         }
 
+        // POST: api/User/login
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
+        public async Task<ActionResult<UserDto>> Login([FromBody] LoginUserDto loginUserDto)
         {
-            try
-            {
-                var user = await _userService.LogInUser(dto);
-                return Ok(user);
-            }
-            catch (EmailorPasswordNotFoundException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (EmailNotVerifiedException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            var user = await _userService.LogInUser(loginUserDto);
+            return Ok(user);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserById(int id)
-        {
-            try
-            {
-                var user = await _userService.GetUserById(id);
-                return Ok(user);
-            }
-            catch (UserNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
+        // POST: api/User/verify-email
         [HttpPost("verify-email")]
-        public async Task<IActionResult> VerifyEmail([FromQuery] string email, [FromQuery] string code)
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto verifyEmailDto)
         {
-            try
-            {
-                var result = await _userService.VerifyEmail(email, code);
-                return Ok(new { success = result });
-            }
-            catch (InvalidVerificationCodeException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _userService.VerifyEmail(verifyEmailDto);
+            return Ok(new { Message = "Email verified successfully." });
         }
-    }
+
+        // PUT: api/User/5/points
+        [HttpPut("{userId:int}/points")]
+        public async Task<IActionResult> UpdatePoints(
+            int userId,
+            [FromQuery] int points)
+        {
+            await _userService.UpdatePoints(userId, points);
+            return NoContent();
+        }
+
+
+        // DELETE: api/User/5
+        [HttpDelete("{userId:int}")]
+        public async Task<IActionResult> DeleteAccount(int userId)
+        {
+            await _userService.DeleteAccount(userId);
+            return NoContent();
+        }
+    
+
+}
 }
