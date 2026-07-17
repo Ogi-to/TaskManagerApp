@@ -13,12 +13,13 @@ namespace TaskManagerApp.Services
         private readonly IUserRepository _userRepository;
         private readonly IRankRepository _rankRepository;
         private readonly IEmailCodeRepository _emailCodeRepository;
-        private readonly IEmailCodeService _emailCodeService;
+        private readonly IEmailService _emailCodeService;
         private readonly HashPasswordService _hashPasswordService;
         private readonly IUserStatsService _userStatsService;
+        private readonly ITaskItemRepository _taskItemRepository;
 
         public UserService(IUserRepository userRepository, IRankRepository rankRepository, IEmailCodeRepository emailCodeRepository, 
-            IEmailCodeService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService)
+            IEmailService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService, ITaskItemRepository taskItemRepository)
         {
             _userRepository = userRepository;
             _rankRepository = rankRepository;
@@ -26,6 +27,7 @@ namespace TaskManagerApp.Services
             _emailCodeService = emailCodeService;
             _hashPasswordService = hashPasswordService;
             _userStatsService = userStatsService;
+            _taskItemRepository = taskItemRepository;
         }
         public async Task<UserDto> GetUserById(int id)
         {
@@ -170,6 +172,35 @@ namespace TaskManagerApp.Services
             await UpdateRank(user);
             await UpdateStreak(user);
             await _userRepository.UpdateUserInfoAsync(user);
+        }
+
+        public async Task UpdateReminderSettings(int userId, ReminderSettingsDto reminderSettingsDto)
+        {
+            var user = await _userRepository.GetAsync(userId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(userId);
+            }
+            user.ReminderStartBefore = reminderSettingsDto.ReminderStartBefore;
+            user.ReminderInterval = reminderSettingsDto.ReminderInterval;
+            await _userRepository.UpdateAccountInfoAsync(user);
+        }
+
+        public async Task SendReminderEmail()
+        {
+            List<TaskItem> tasks = await _taskItemRepository.GetAllAboutToStartAsync();
+            foreach (var task in tasks)
+            {
+                User user = task.User;
+                if (task.LastSendReminder == null || task.LastSendReminder.Value.AddMinutes(user.ReminderInterval) <= DateTime.UtcNow)
+                {
+                    await _emailCodeService.SendReminderEmail(user.Email, user, task);
+                    task.LastSendReminder = DateTime.UtcNow;
+                }
+            }
+            await _taskItemRepository.SaveChanges();
+
+
         }
 
 

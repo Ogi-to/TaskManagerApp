@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskManagerApp.Data;
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using static TaskManagerApp.Data.Models.State;
 
@@ -31,17 +32,43 @@ namespace TaskManagerApp.Repositories
 
         public async Task DeleteAccountAsync(int id)
         {
-            var userToDelete = await _context.Users.Where(u => u.Id == id).FirstOrDefaultAsync();
-            var userTasks = await _context.TaskItems.Where(t => t.UserId == id).ToListAsync();
-            var userRelations = await _context.UsersRelations.Where(r => r.InitiatorId == id).ToListAsync();
-            var userChalllenges = await _context.UsersChallenges.Where(uc => uc.UserId == id).ToListAsync();
-            var userStats = await _context.UserStats.Where(s => s.UserId == id).FirstOrDefaultAsync();
-            _context.TaskItems.RemoveRange(userTasks);
-            _context.UsersRelations.RemoveRange(userRelations);
-            _context.UsersChallenges.RemoveRange(userChalllenges);
-            _context.UserStats.Remove(userStats);
+            var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
-            _context.Users.Remove(userToDelete);
+            if (user == null)
+                throw new UserNotFoundException(id); // or throw exception
+
+            var userTasks = await _context.TaskItems
+            .Where(t => t.UserId == id)
+            .ToListAsync();
+
+            var taskIds = userTasks.Select(t => t.Id).ToList();
+
+            var taskCategories = await _context.TasksCategories
+                .Where(tc => taskIds.Contains(tc.TaskId))
+                .ToListAsync();
+
+            var relations = await _context.UsersRelations
+                .Where(r => r.InitiatorId == id)
+                .ToListAsync();
+
+            var challenges = await _context.UsersChallenges
+                .Where(uc => uc.UserId == id)
+                .ToListAsync();
+
+            var stats = await _context.UserStats
+                .FirstOrDefaultAsync(s => s.UserId == id);
+
+            _context.TasksCategories.RemoveRange(taskCategories);
+            _context.TaskItems.RemoveRange(userTasks);
+            _context.UsersRelations.RemoveRange(relations);
+            _context.UsersChallenges.RemoveRange(challenges);
+
+            if (stats != null)
+                _context.UserStats.Remove(stats);
+
+            _context.Users.Remove(user);
+
             await _context.SaveChangesAsync();
         }
 
@@ -125,6 +152,8 @@ namespace TaskManagerApp.Repositories
             userToModify.Username = item.Username;
             userToModify.Email = item.Email;
             userToModify.PasswordHash = item.PasswordHash;
+            userToModify.ReminderStartBefore = item.ReminderStartBefore;
+            userToModify.ReminderInterval = item.ReminderInterval;
             await _context.SaveChangesAsync();
         }
         public async Task UpdateUserInfoAsync(User item)

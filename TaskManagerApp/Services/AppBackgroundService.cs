@@ -18,18 +18,20 @@ namespace TaskManagerApp.Services
                 using var scope = _scopeFactory.CreateScope();
 
                 var taskService = scope.ServiceProvider.GetRequiredService<ITaskItemService>();
-                var emailCodeService = scope.ServiceProvider.GetRequiredService<IEmailCodeService>();
+                var emailCodeService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var challengeService = scope.ServiceProvider.GetRequiredService<IChallengeService>();
+                var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
 
                 await emailCodeService.DeleteCodes();
 
                 await taskService.MarkOverdueTasksAsync();
                 await taskService.DeleteOverdueTasksMoreThanDay();
+                await userService.SendReminderEmail();
 
                 await challengeService.ChooseRandomChallenges();
                 await challengeService.RemoveChallengesActivity();
-                // Wait 5 minutes before checking again
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                // Wait 1 minute before checking again
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
     }

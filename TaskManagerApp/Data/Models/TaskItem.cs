@@ -22,6 +22,8 @@ namespace TaskManagerApp.Data.Models
         public DateTime? EndDate { get; set; }
         public StateType State { get; set; }
 
+        public DateTime? LastSendReminder { get; set; } = null;
+
         // Foreign key
         public int UserId { get; set; }
 

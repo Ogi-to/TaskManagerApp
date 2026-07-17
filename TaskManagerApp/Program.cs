@@ -32,7 +32,7 @@ namespace TaskManagerApp
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITaskItemService, TaskItemService>();
-            builder.Services.AddScoped<IEmailCodeService, EmailCodeService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<HashPasswordService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<IChallengeService, ChallengeService>();

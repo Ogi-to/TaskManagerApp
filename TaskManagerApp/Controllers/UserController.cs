@@ -67,6 +67,15 @@ namespace TaskManagerApp.Controllers
             return NoContent();
         }
 
+        [HttpPut("{userId:int}/reminder-settings")]
+        public async Task<IActionResult> UpdateReminderSettings(
+            int userId,
+            [FromBody] ReminderSettingsDto reminderSettingsDto)
+        {
+            await _userService.UpdateReminderSettings(userId, reminderSettingsDto);
+            return NoContent();
+        }
+
 
         // DELETE: api/User/5
         [HttpDelete("{userId:int}")]

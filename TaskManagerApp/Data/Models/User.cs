@@ -38,6 +38,9 @@ namespace TaskManagerApp.Data.Models
         [StringLength(8)]
         public string UserCode { get; set; }
 
+        public int ReminderStartBefore { get; set; } = 60; // in minutes, default is 60 minutes
+        public int ReminderInterval { get; set; } = 20; // in minutes, default is 20 minutes
+
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
         public List<TaskItem> TaskItems { get; set; }

@@ -6,10 +6,10 @@ using TaskManagerApp.InterfacesServices;
 
 namespace TaskManagerApp.Services
 {
-    public class EmailCodeService : IEmailCodeService
+    public class EmailService : IEmailService
     {
         readonly IEmailCodeRepository _emailCodeRepository;
-        public EmailCodeService(IEmailCodeRepository emailCodeRepository)
+        public EmailService(IEmailCodeRepository emailCodeRepository)
         {
             _emailCodeRepository = emailCodeRepository;
         }
@@ -63,6 +63,34 @@ namespace TaskManagerApp.Services
         public async Task DeleteCodes()
         {
             await _emailCodeRepository.DeleteExpiredCodesAsync();
+        }
+
+        public async Task SendReminderEmail(string email, User user, TaskItem taskItem)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.To.Add($"{email}");
+            var html = await File.ReadAllTextAsync("Templates/ReminderEmail.html");
+
+            // Replace placeholders with actual values
+            html = html.Replace("{{UserName}}", user.Username);
+            html = html.Replace("{{TaskName}}", taskItem.Name);
+            html = html.Replace("{{StartTime}}", taskItem.StartDate.ToString("yyyy-MM-dd HH:mm"));
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
         }
     }
    

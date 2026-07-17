@@ -36,16 +36,24 @@ namespace TaskManagerApp.Repositories
                        .ThenInclude(tc => tc.Category)
                    .FirstOrDefaultAsync(t => t.Id == id);
         }
-
-        //public async Task<List<TaskItem>> GetAllAsync()
-        //{
-        //    return await _context.TaskItems.Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).OrderBy(t => t.EndDate).ToListAsync();
-        //}
         public async Task<List<TaskItem>> GetAllByUserAsync(int userId)
         {
 
                 return await _context.TaskItems
            .Where(t => t.UserId == userId).ToListAsync();
+        }
+
+        public async Task<List<TaskItem>> GetAllAboutToStartAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _context.TaskItems
+            .Include(t => t.User)
+            .Where(t =>
+                t.User.ReminderStartBefore > 0 &&
+                t.State == StateType.NotStarted &&
+                t.StartDate >= now &&
+                t.StartDate <= now.AddMinutes(t.User.ReminderStartBefore))
+            .ToListAsync();
         }
 
         public async Task<List<TaskItem>> GetAllAsync()
@@ -90,6 +98,11 @@ namespace TaskManagerApp.Repositories
             }
 
 
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task SaveChanges()
+        {
             await _context.SaveChangesAsync();
         }
 

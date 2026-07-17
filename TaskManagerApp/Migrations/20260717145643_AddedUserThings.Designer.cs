@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TaskManagerApp.Data;
@@ -11,9 +12,11 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    partial class TaskManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717145643_AddedUserThings")]
+    partial class AddedUserThings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -260,11 +263,11 @@ namespace TaskManagerApp.Migrations
                     b.Property<int>("RankId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ReminderInterval")
-                        .HasColumnType("integer");
+                    b.Property<TimeSpan>("ReminderInterval")
+                        .HasColumnType("interval");
 
-                    b.Property<int>("ReminderStartBefore")
-                        .HasColumnType("integer");
+                    b.Property<TimeSpan>("ReminderStartBefore")
+                        .HasColumnType("interval");
 
                     b.Property<int>("Streak")
                         .HasColumnType("integer");
