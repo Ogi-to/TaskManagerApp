@@ -19,5 +19,7 @@
         public DateTime? LastActive { get; set; }
 
         public string UserCode { get; set; }
+        public int ReminderStartBefore { get; set; }
+        public int ReminderInterval { get; set; }
     }
 }

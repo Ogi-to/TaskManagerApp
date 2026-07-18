@@ -186,15 +186,15 @@ namespace TaskManagerApp.Services
             await _userRepository.UpdateAccountInfoAsync(user);
         }
 
-        public async Task SendReminderEmail()
+        public async Task SendReminderForTasksEmail()
         {
             List<TaskItem> tasks = await _taskItemRepository.GetAllAboutToStartAsync();
             foreach (var task in tasks)
             {
-                User user = task.User;
+                UserDto user = await GetUserById(task.UserId);
                 if (task.LastSendReminder == null || task.LastSendReminder.Value.AddMinutes(user.ReminderInterval) <= DateTime.UtcNow)
                 {
-                    await _emailCodeService.SendReminderEmail(user.Email, user, task);
+                    await _emailCodeService.SendReminderEmail(user, task);
                     task.LastSendReminder = DateTime.UtcNow;
                 }
             }

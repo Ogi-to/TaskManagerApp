@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 
 namespace TaskManagerApp.Interfaces
 {
@@ -6,7 +7,7 @@ namespace TaskManagerApp.Interfaces
     {
         public Task<User?> GetAsync(int id);
 
-        public Task<List<User>> GetAllUsersAsync();
+        public Task<List<UserDto>> GetAllUsersAsync();
         public Task<User?> GetByEmailAsync(string email);
         public Task<User?> GetByUsernameAsync(string username);
         public Task<User?> GetByUserCodeAsync(string userCode);

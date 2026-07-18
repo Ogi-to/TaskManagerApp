@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.InterfacesRepositories;
 using TaskManagerApp.InterfacesServices;
 
@@ -65,15 +66,17 @@ namespace TaskManagerApp.Services
             await _emailCodeRepository.DeleteExpiredCodesAsync();
         }
 
-        public async Task SendReminderEmail(string email, User user, TaskItem taskItem)
+
+        //TODO: BETTER EMAIL DESIGN SHOULD BE IMPLEMENTED
+        public async Task SendReminderEmail(UserDto userDto, TaskItem taskItem)
         {
             var message = new MailMessage();
             message.From = new MailAddress("oginik7@gmail.com");
-            message.To.Add($"{email}");
+            message.To.Add($"{userDto.Email}");
             var html = await File.ReadAllTextAsync("Templates/ReminderEmail.html");
 
             // Replace placeholders with actual values
-            html = html.Replace("{{UserName}}", user.Username);
+            html = html.Replace("{{UserName}}", userDto.Username);
             html = html.Replace("{{TaskName}}", taskItem.Name);
             html = html.Replace("{{StartTime}}", taskItem.StartDate.ToString("yyyy-MM-dd HH:mm"));
 
@@ -92,6 +95,33 @@ namespace TaskManagerApp.Services
                 smtp.Send(message);
             }
         }
+
+        //TODO: BETTER EMAIL DESIGN SHOULD BE IMPLEMENTED
+        public async Task SendEmailForNewChallenges(UserDto userDto, List<Challenge> challenges)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.To.Add($"{userDto.Email}");
+            var html = await File.ReadAllTextAsync("Templates/NewChallengesEmail.html");
+            // Replace placeholders with actual values
+            html = html.Replace("{{UserName}}", userDto.Username);
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
+        
     }
    
 }

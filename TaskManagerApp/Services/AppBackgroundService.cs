@@ -26,7 +26,7 @@ namespace TaskManagerApp.Services
 
                 await taskService.MarkOverdueTasksAsync();
                 await taskService.DeleteOverdueTasksMoreThanDay();
-                await userService.SendReminderEmail();
+                await userService.SendReminderForTasksEmail();
 
                 await challengeService.ChooseRandomChallenges();
                 await challengeService.RemoveChallengesActivity();

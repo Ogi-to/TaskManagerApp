@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskManagerApp.Data;
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using static TaskManagerApp.Data.Models.State;
@@ -25,9 +26,22 @@ namespace TaskManagerApp.Repositories
             return item;
         }
 
-        public async Task<List<User>> GetAllUsersAsync()
+        public async Task<List<UserDto>> GetAllUsersAsync()
         {
-            return await _context.Users.OrderBy(u => u.Id).ToListAsync();
+            return await _context.Users.OrderBy(u => u.Id).Select(u => new UserDto
+            {
+             Id = u.Id,
+             Username = u.Username,
+             Email = u.Email,
+             Streak = u.Streak,
+             Points = u.Points,
+             RankId = u.RankId,
+             CreatedAt = u.CreatedAt,
+             LastActive = u.LastActive,
+             UserCode = u.UserCode,
+             ReminderInterval = u.ReminderInterval,
+             ReminderStartBefore = u.ReminderStartBefore
+            }).ToListAsync();
         }
 
         public async Task DeleteAccountAsync(int id)

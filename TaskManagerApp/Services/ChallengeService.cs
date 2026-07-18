@@ -15,14 +15,16 @@ namespace TaskManagerApp.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IUserStatsService _userStatsService;
         private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
         public ChallengeService(IChallengeRepository challengeRepository, IUserRepository userRepository, ICategoryRepository categoryRepository,
-            IUserStatsService userStatsService, IUserService userService)
+            IUserStatsService userStatsService, IUserService userService, IEmailService emailService)
         {
             _challengeRepository = challengeRepository;
             _userRepository = userRepository;
             _categoryRepository = categoryRepository;
             _userStatsService = userStatsService;
             _userService = userService;
+            _emailService = emailService;
         }
         public async Task CompleteChallengeAsync(int challengeId, int userId)
         {
@@ -237,6 +239,12 @@ namespace TaskManagerApp.Services
             if (currentlyActiveChallenges.Count < possibleNumberOfActiveChallengesAtOneTime)
             {
                 await _challengeRepository.ChooseRandomChallenges(possibleNumberOfActiveChallengesAtOneTime - currentlyActiveChallenges.Count);
+                currentlyActiveChallenges = await _challengeRepository.GetAllActiveAsync();
+                List<UserDto> users = await _userRepository.GetAllUsersAsync();
+                foreach (UserDto user in users)
+                {
+                    await _emailService.SendEmailForNewChallenges(user, currentlyActiveChallenges);
+                }
             }
 
 
