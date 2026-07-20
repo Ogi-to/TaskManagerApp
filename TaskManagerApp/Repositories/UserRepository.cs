@@ -26,22 +26,9 @@ namespace TaskManagerApp.Repositories
             return item;
         }
 
-        public async Task<List<UserDto>> GetAllUsersAsync()
+        public async Task<List<User>> GetAllUsersAsync()
         {
-            return await _context.Users.OrderBy(u => u.Id).Select(u => new UserDto
-            {
-             Id = u.Id,
-             Username = u.Username,
-             Email = u.Email,
-             Streak = u.Streak,
-             Points = u.Points,
-             RankId = u.RankId,
-             CreatedAt = u.CreatedAt,
-             LastActive = u.LastActive,
-             UserCode = u.UserCode,
-             ReminderInterval = u.ReminderInterval,
-             ReminderStartBefore = u.ReminderStartBefore
-            }).ToListAsync();
+            return await _context.Users.ToListAsync();
         }
 
         public async Task DeleteAccountAsync(int id)
@@ -86,32 +73,27 @@ namespace TaskManagerApp.Repositories
             await _context.SaveChangesAsync();
         }
 
+
         public async Task<User?> GetAsync(int id)
         {
-            return await _context.Users
-             .Include(u => u.Rank)
-             .Include(u => u.TaskItems)
-             .Include(u => u.UsersChallenges)
-                 .ThenInclude(uc => uc.Challenge)
-             .Include(u => u.SentRelations)
-             .Include(u => u.ReceivedRelations)
-             .FirstOrDefaultAsync(u => u.Id == id);
+            return await _context.Users.Include(u => u.TaskItems).Include(u => u.UsersChallenges).ThenInclude(uc => uc.Challenge).FirstOrDefaultAsync(u => u.Id == id);
+            
         }
         public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.UsersChallenges)
+            return await _context.Users.Where(u => u.Email == email).Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
         public async Task<User?> GetByUsernameAsync(string username)
         {
-            return await _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.UsersChallenges)
+            return await _context.Users.Where(u => u.Username == username).Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
         public async Task<User?> GetByUserCodeAsync(string userCode)
         {
-            return await _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.UsersChallenges)
+            return await _context.Users.Where(u => u.UserCode == userCode).Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
@@ -160,24 +142,31 @@ namespace TaskManagerApp.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAccountInfoAsync(User item)
+        public async Task UpdateAccountInfoAsync(UpdateAccountDto item, int userId)
         {
-            User userToModify = _context.Users.Where(u => u.Id == item.Id).FirstOrDefault();
-            userToModify.Username = item.Username;
-            userToModify.Email = item.Email;
-            userToModify.PasswordHash = item.PasswordHash;
-            userToModify.ReminderStartBefore = item.ReminderStartBefore;
-            userToModify.ReminderInterval = item.ReminderInterval;
+            var user = await _context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            user.Username = item.Username;
+            user.Email = item.Email;
+            user.PasswordHash = item.Password;
+            user.IsEmailVerified = item.IsEmailVerified;
             await _context.SaveChangesAsync();
         }
-        public async Task UpdateUserInfoAsync(User item)
+
+        public async Task UpdateUserReminders(ReminderSettingsDto reminderSettingsDto, int userId)
         {
-            User userToModify = _context.Users.Where(u => u.Id == item.Id).FirstOrDefault();
-            userToModify.Points = item.Points;
-            userToModify.RankId = item.RankId;
-            userToModify.Rank = item.Rank;
-            userToModify.Streak = item.Streak;
-            userToModify.LastActive = item.LastActive;
+            var user = await _context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            user.ReminderStartBefore = reminderSettingsDto.ReminderStartBefore;
+            user.ReminderInterval = reminderSettingsDto.ReminderInterval;
+            await _context.SaveChangesAsync();
+        }
+        public async Task UpdateUserInfoAsync(UpdateUserDto item, int id)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            user.Points = item.Points;
+            user.RankId = item.RankId;
+            user.Streak = item.Streak;
+            user.LastActive = item.LastActive;
+
             await _context.SaveChangesAsync();
         }
         public async Task<List<User>> GetFriendsListAsync(User item)

@@ -72,7 +72,14 @@ namespace TaskManagerApp.Controllers
             int userId,
             [FromBody] ReminderSettingsDto reminderSettingsDto)
         {
-            await _userService.UpdateReminderSettings(userId, reminderSettingsDto);
+            await _userService.UpdateReminderSettings(reminderSettingsDto);
+            return NoContent();
+        }
+
+        [HttpPost("/Resend verification code")]
+        public async Task<IActionResult> ReSendVerificationCode(string email)
+        {
+            await _userService.ReSendVerificationCode(email);
             return NoContent();
         }
 

@@ -7,18 +7,21 @@ namespace TaskManagerApp.Interfaces
     {
         public Task<User?> GetAsync(int id);
 
-        public Task<List<UserDto>> GetAllUsersAsync();
-        public Task<User?> GetByEmailAsync(string email);
-        public Task<User?> GetByUsernameAsync(string username);
-        public Task<User?> GetByUserCodeAsync(string userCode);
+        public Task<List<User>> GetAllUsersAsync();
+        public Task<User> GetByEmailAsync(string email);
+        public Task<User> GetByUsernameAsync(string username);
+        public Task<User> GetByUserCodeAsync(string userCode);
         public Task<UsersRelations?> GetRelationAsync(int initiatorId, int relatedUserId);
 
         public Task<User> CreateAccountAsync(User item);
         public Task DeleteAccountAsync(int id);
 
-        public Task UpdateAccountInfoAsync(User item);
+        public Task UpdateAccountInfoAsync(UpdateAccountDto item, int userId);
 
-        public Task UpdateUserInfoAsync(User item);
+        public Task UpdateUserInfoAsync(UpdateUserDto item, int id);
+
+        public Task UpdateUserReminders(ReminderSettingsDto reminderSettingsDto, int userId);
+
 
         public Task SendRequestAsync(UsersRelations relation);
 

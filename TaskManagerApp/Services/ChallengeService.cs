@@ -1,5 +1,6 @@
 ﻿//using Org.BouncyCastle.Asn1.Cmp; nqmam predstawa otkyde doide
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.DtoMappers;
 using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
@@ -240,10 +241,10 @@ namespace TaskManagerApp.Services
             {
                 await _challengeRepository.ChooseRandomChallenges(possibleNumberOfActiveChallengesAtOneTime - currentlyActiveChallenges.Count);
                 currentlyActiveChallenges = await _challengeRepository.GetAllActiveAsync();
-                List<UserDto> users = await _userRepository.GetAllUsersAsync();
-                foreach (UserDto user in users)
+                List<User> users = await _userRepository.GetAllUsersAsync();
+                foreach (User user in users)
                 {
-                    await _emailService.SendEmailForNewChallenges(user, currentlyActiveChallenges);
+                    await _emailService.SendEmailForNewChallenges(user.Username, user.Email, currentlyActiveChallenges);
                 }
             }
 

@@ -46,14 +46,13 @@ namespace TaskManagerApp.Repositories
         public async Task<List<TaskItem>> GetAllAboutToStartAsync()
         {
             var now = DateTime.UtcNow;
-            return await _context.TaskItems
-            .Include(t => t.User)
-            .Where(t =>
-                t.User.ReminderStartBefore > 0 &&
-                t.State == StateType.NotStarted &&
-                t.StartDate >= now &&
-                t.StartDate <= now.AddMinutes(t.User.ReminderStartBefore))
-            .ToListAsync();
+
+            var tasks = await _context.TaskItems
+                .Include(t => t.User)
+                .Where(t => t.User.ReminderStartBefore > 0).Where(t => t.State == StateType.NotStarted).Where(t => t.StartDate >= now).
+                Where(t => t.StartDate <= now.AddMinutes(t.User.ReminderStartBefore))
+                .ToListAsync();
+            return tasks;
         }
 
         public async Task<List<TaskItem>> GetAllAsync()

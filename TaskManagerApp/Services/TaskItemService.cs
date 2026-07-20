@@ -14,7 +14,8 @@ namespace TaskManagerApp.Services
         private readonly IUserService _userService;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IUserStatsService _userStatsService;
-        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService, ICategoryRepository categoryRepository, IUserStatsService userStatsService)
+        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService,
+        ICategoryRepository categoryRepository, IUserStatsService userStatsService)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;
@@ -141,7 +142,7 @@ namespace TaskManagerApp.Services
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 State = task.State,
-                UserId = task.Id,
+                UserId = task.UserId,
                 Categories = task.TasksCategories
                     .Select(tc => tc.Category.Name)
                     .ToList()

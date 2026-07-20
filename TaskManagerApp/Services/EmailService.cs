@@ -68,15 +68,16 @@ namespace TaskManagerApp.Services
 
 
         //TODO: BETTER EMAIL DESIGN SHOULD BE IMPLEMENTED
-        public async Task SendReminderEmail(UserDto userDto, TaskItem taskItem)
+        public async Task SendReminderEmail(string username, string email, TaskItem taskItem)
         {
+        
             var message = new MailMessage();
             message.From = new MailAddress("oginik7@gmail.com");
-            message.To.Add($"{userDto.Email}");
+            message.To.Add($"{email}");
             var html = await File.ReadAllTextAsync("Templates/ReminderEmail.html");
 
             // Replace placeholders with actual values
-            html = html.Replace("{{UserName}}", userDto.Username);
+            html = html.Replace("{{UserName}}", username);
             html = html.Replace("{{TaskName}}", taskItem.Name);
             html = html.Replace("{{StartTime}}", taskItem.StartDate.ToString("yyyy-MM-dd HH:mm"));
 
@@ -97,14 +98,14 @@ namespace TaskManagerApp.Services
         }
 
         //TODO: BETTER EMAIL DESIGN SHOULD BE IMPLEMENTED
-        public async Task SendEmailForNewChallenges(UserDto userDto, List<Challenge> challenges)
+        public async Task SendEmailForNewChallenges(string username, string email, List<Challenge> challenges)
         {
             var message = new MailMessage();
             message.From = new MailAddress("oginik7@gmail.com");
-            message.To.Add($"{userDto.Email}");
+            message.To.Add($"{email}");
             var html = await File.ReadAllTextAsync("Templates/NewChallengesEmail.html");
             // Replace placeholders with actual values
-            html = html.Replace("{{UserName}}", userDto.Username);
+            html = html.Replace("{{UserName}}", username);
 
             message.IsBodyHtml = true;
             message.Body = html;

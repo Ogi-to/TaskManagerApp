@@ -11,9 +11,10 @@ namespace TaskManagerApp.InterfacesServices
         public Task DeleteAccount(int userId);
         public Task VerifyEmail(VerifyEmailDto verifyEmailDto);
         public Task SendReminderForTasksEmail();
-        public Task UpdateStreak(User user);
-        public Task UpdateRank(User user);
+        public Task UpdateStreak(UpdateUserDto user);
+        public Task UpdateRank(UpdateUserDto user);
         public Task UpdatePoints(int userId, int points);
-        public Task UpdateReminderSettings(int userId, ReminderSettingsDto reminderSettingsDto);
+        public Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto);
+        public Task ReSendVerificationCode(string email);
     }
 }

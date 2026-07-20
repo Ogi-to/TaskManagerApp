@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DtoMappers;
 using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
@@ -12,44 +13,30 @@ namespace TaskManagerApp.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IRankRepository _rankRepository;
-        private readonly IEmailCodeRepository _emailCodeRepository;
         private readonly IEmailService _emailCodeService;
         private readonly HashPasswordService _hashPasswordService;
         private readonly IUserStatsService _userStatsService;
         private readonly ITaskItemRepository _taskItemRepository;
 
-        public UserService(IUserRepository userRepository, IRankRepository rankRepository, IEmailCodeRepository emailCodeRepository, 
-            IEmailService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService, ITaskItemRepository taskItemRepository)
+        public UserService(IUserRepository userRepository, IRankRepository rankRepository, ITaskItemRepository taskItemRepository,
+            IEmailService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService)
         {
             _userRepository = userRepository;
             _rankRepository = rankRepository;
-            _emailCodeRepository = emailCodeRepository;
             _emailCodeService = emailCodeService;
             _hashPasswordService = hashPasswordService;
             _userStatsService = userStatsService;
             _taskItemRepository = taskItemRepository;
+           
         }
         public async Task<UserDto> GetUserById(int id)
         {
             var user = await _userRepository.GetAsync(id);
 
             if (user == null)
-            {
                 throw new UserNotFoundException(id);
-            }
 
-            return new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                Streak = user.Streak,
-                Points = user.Points,
-                RankId = user.RankId,
-                CreatedAt = user.CreatedAt,
-                LastActive = user.LastActive,
-                UserCode = user.UserCode
-            };
+            return user.ToDto();
 
         }
 
@@ -103,18 +90,7 @@ namespace TaskManagerApp.Services
                 throw new EmailorPasswordNotFoundException();
             }
 
-            return new UserDto
-            {
-                Id = testUser.Id,
-                Username = testUser.Username,
-                Email = testUser.Email,
-                Streak = testUser.Streak,
-                Points = testUser.Points,
-                RankId = testUser.RankId,
-                CreatedAt = testUser.CreatedAt,
-                LastActive = testUser.LastActive,
-                UserCode = testUser.UserCode
-            };
+            return testUser.ToDto();
         }
 
         public async Task DeleteAccount(int userId)
@@ -127,7 +103,7 @@ namespace TaskManagerApp.Services
             await _userRepository.DeleteAccountAsync(user.Id);
         }
 
-        public async Task UpdateStreak(User user)
+        public async Task UpdateStreak(UpdateUserDto user)
         {
           
             var today = DateTime.UtcNow.Date;
@@ -148,7 +124,7 @@ namespace TaskManagerApp.Services
             user.LastActive = DateTime.UtcNow;
         }
 
-        public async Task UpdateRank(User user)
+        public async Task UpdateRank(UpdateUserDto user)
         {
             
             var newRank = await _rankRepository.GetRankForPoints(user.Points);
@@ -161,40 +137,55 @@ namespace TaskManagerApp.Services
 
         public async Task UpdatePoints(int userId, int points)
         {
-            var user = await _userRepository.GetAsync(userId);
+            User user = await _userRepository.GetAsync(userId);
             if (user == null)
             {
                 throw new UserNotFoundException(userId);
             }
             user.Points += points;
+            UpdateUserDto updateUserDto = new UpdateUserDto
+            {
+                Points = user.Points,
+                RankId = user.RankId,
+                LastActive = user.LastActive,
+                Streak = user.Streak
+            };
 
-
-            await UpdateRank(user);
-            await UpdateStreak(user);
-            await _userRepository.UpdateUserInfoAsync(user);
+            await UpdateRank(updateUserDto);
+            await UpdateStreak(updateUserDto);
+            await _userRepository.UpdateUserInfoAsync(updateUserDto, user.Id);
         }
 
-        public async Task UpdateReminderSettings(int userId, ReminderSettingsDto reminderSettingsDto)
+        public async Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto)
         {
-            var user = await _userRepository.GetAsync(userId);
+            var user = await _userRepository.GetAsync(reminderSettingsDto.Id);
             if (user == null)
             {
-                throw new UserNotFoundException(userId);
+                throw new UserNotFoundException(reminderSettingsDto.Id);
             }
-            user.ReminderStartBefore = reminderSettingsDto.ReminderStartBefore;
-            user.ReminderInterval = reminderSettingsDto.ReminderInterval;
-            await _userRepository.UpdateAccountInfoAsync(user);
+            ReminderSettingsDto reminderSettings = new ReminderSettingsDto
+            {
+                Id = reminderSettingsDto.Id,
+                ReminderInterval = reminderSettingsDto.ReminderInterval,
+                ReminderStartBefore = reminderSettingsDto.ReminderStartBefore,
+            };
+
+            reminderSettings.ReminderStartBefore = reminderSettingsDto.ReminderStartBefore;
+            reminderSettings.ReminderInterval = reminderSettingsDto.ReminderInterval;
+            await _userRepository.UpdateUserReminders(reminderSettings, user.Id);
         }
 
         public async Task SendReminderForTasksEmail()
         {
             List<TaskItem> tasks = await _taskItemRepository.GetAllAboutToStartAsync();
+            Console.WriteLine(tasks.Count); 
             foreach (var task in tasks)
             {
-                UserDto user = await GetUserById(task.UserId);
+                
+                User user = await _userRepository.GetAsync(task.UserId);
                 if (task.LastSendReminder == null || task.LastSendReminder.Value.AddMinutes(user.ReminderInterval) <= DateTime.UtcNow)
                 {
-                    await _emailCodeService.SendReminderEmail(user, task);
+                    await _emailCodeService.SendReminderEmail(user.Username, user.Email, task);
                     task.LastSendReminder = DateTime.UtcNow;
                 }
             }
@@ -217,7 +208,26 @@ namespace TaskManagerApp.Services
                 throw new EmailorPasswordNotFoundException();
             }
             user.IsEmailVerified = true;
-            await _userRepository.UpdateAccountInfoAsync(user);
+            UpdateAccountDto updateAccountDto = new UpdateAccountDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Password = user.PasswordHash,
+                IsEmailVerified = user.IsEmailVerified,
+            };
+            
+            await _userRepository.UpdateAccountInfoAsync(updateAccountDto, user.Id);
+        }
+
+        public async Task ReSendVerificationCode(string email)
+        {
+            User user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                throw new EmailorPasswordNotFoundException();
+            }
+            await _emailCodeService.SendVerificationCode(user.Email);
         }
     }
 }
