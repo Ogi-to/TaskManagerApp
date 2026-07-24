@@ -68,13 +68,13 @@ namespace TaskManagerApp.Services
 
 
         //TODO: BETTER EMAIL DESIGN SHOULD BE IMPLEMENTED
-        public async Task SendReminderEmail(string username, string email, TaskItem taskItem)
+        public async Task SendReminderTaskEmail(string username, string email, TaskItem taskItem)
         {
         
             var message = new MailMessage();
             message.From = new MailAddress("oginik7@gmail.com");
             message.To.Add($"{email}");
-            var html = await File.ReadAllTextAsync("Templates/ReminderEmail.html");
+            var html = await File.ReadAllTextAsync("Templates/ReminderTaskEmail.html");
 
             // Replace placeholders with actual values
             html = html.Replace("{{UserName}}", username);
@@ -122,7 +122,33 @@ namespace TaskManagerApp.Services
                 smtp.Send(message);
             }
         }
-        
+
+        public async Task SendReminderForStreakEmail(User user)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.To.Add($"{user.Email}");
+            var html = await File.ReadAllTextAsync("Templates/StreakReminderEmail.html");
+            // Replace placeholders with actual values
+            html = html.Replace("{{UserName}}", user.Username);
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
+
+
     }
    
 }

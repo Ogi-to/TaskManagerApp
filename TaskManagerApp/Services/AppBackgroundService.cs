@@ -6,15 +6,29 @@ namespace TaskManagerApp.Services
     {
         private readonly IServiceScopeFactory _scopeFactory;
 
+        private DateTime _lastNoonReminder = DateTime.MinValue;
+        private DateTime _lastEveningReminder = DateTime.MinValue;
+
+       
+
         public AppBackgroundService(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;
         }
 
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
             while (!stoppingToken.IsCancellationRequested)
             {
+
+                DateTime now = DateTime.UtcNow;
+                DateTime today = now.Date;
+
+                DateTime noon = today.AddHours(12);
+                DateTime evening = today.AddHours(22);
+
                 using var scope = _scopeFactory.CreateScope();
 
                 var taskService = scope.ServiceProvider.GetRequiredService<ITaskItemService>();
@@ -30,6 +44,17 @@ namespace TaskManagerApp.Services
 
                 await challengeService.ChooseRandomChallenges();
                 await challengeService.RemoveChallengesActivity();
+
+                if (now >= noon && _lastNoonReminder != today)
+                {
+                    await userService.SendReminderForStreakEmail();
+                    _lastNoonReminder = now;
+                }
+                if (now >= evening && _lastEveningReminder != today)
+                {
+                    await userService.SendReminderForStreakEmail();
+                    _lastEveningReminder = now;
+                }
                 // Wait 1 minute before checking again
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }

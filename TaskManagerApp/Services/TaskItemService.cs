@@ -222,8 +222,14 @@ namespace TaskManagerApp.Services
                 throw new UserNotAssignedToTaskException();
             }
 
-            var taskPoints = 200; // Assuming each completed task gives 200 points
-            await _userService.UpdatePoints(existingUser.Id, taskPoints);
+            List<TaskItem> tasksCompletedToday = await _taskItemRepository.GetCompletedTasksTodayByUser(existingUser.Id);
+
+            //ONLY 5 TASKS WILL GIVE POINTS IN ONE DAY. SAFETY MESSURE FOR CHEATING! 
+            if (tasksCompletedToday.Count <= 5)
+            {
+                var taskPoints = 200; // Assuming each completed task gives 200 points
+                await _userService.UpdatePoints(existingUser.Id, taskPoints);
+            }
 
             var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
             userStats.TasksCompleted += 1;

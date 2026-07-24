@@ -19,7 +19,7 @@ namespace TaskManagerApp.Interfaces
 
         public Task<List<TaskItem>> GetAllAboutToStartAsync();
         public Task SaveChanges();
-
+        public Task<List<TaskItem>> GetCompletedTasksTodayByUser(int userId);
         public Task CompleteTask(int taskId);
 
         public Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow);

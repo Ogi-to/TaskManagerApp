@@ -11,6 +11,7 @@ namespace TaskManagerApp.InterfacesServices
         public Task DeleteAccount(int userId);
         public Task VerifyEmail(VerifyEmailDto verifyEmailDto);
         public Task SendReminderForTasksEmail();
+        public Task SendReminderForStreakEmail();
         public Task UpdateStreak(UpdateUserDto user);
         public Task UpdateRank(UpdateUserDto user);
         public Task UpdatePoints(int userId, int points);

@@ -22,7 +22,7 @@ namespace TaskManagerApp.Interfaces
 
         public Task UpdateUserReminders(ReminderSettingsDto reminderSettingsDto, int userId);
 
-
+        public Task<List<User>> GetUsersWithStreaksAboutToEndAsync();
         public Task SendRequestAsync(UsersRelations relation);
 
         public Task<bool> RespondToRequestAsync(UsersRelations relation);

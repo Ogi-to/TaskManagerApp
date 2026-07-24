@@ -48,10 +48,9 @@ namespace TaskManagerApp.Repositories
             var now = DateTime.UtcNow;
 
             var tasks = await _context.TaskItems
-                .Include(t => t.User)
-                .Where(t => t.User.ReminderStartBefore > 0).Where(t => t.State == StateType.NotStarted).Where(t => t.StartDate >= now).
-                Where(t => t.StartDate <= now.AddMinutes(t.User.ReminderStartBefore))
-                .ToListAsync();
+            .Include(t => t.User).Where(t => t.State == StateType.NotStarted).Where(t => t.User.ReminderStartBefore > 0)
+            .Where(t => t.StartDate <= now.AddMinutes(t.User.ReminderStartBefore))
+            .ToListAsync();
             return tasks;
         }
 
@@ -109,9 +108,20 @@ namespace TaskManagerApp.Repositories
         {
             var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
             task.State = StateType.Completed;
+            task.CompletedAt = DateTime.UtcNow;
 
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<TaskItem>> GetCompletedTasksTodayByUser(int userId)
+        {
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+            List<TaskItem> taskItems = await _context.TaskItems.Where(t => t.UserId == userId && t.State == StateType.Completed
+            && t.CompletedAt >= today && t.CompletedAt < tomorrow).ToListAsync();
+            return taskItems;
+
         }
 
         public async Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow)
@@ -125,8 +135,15 @@ namespace TaskManagerApp.Repositories
 
         public async Task DeleteOverdueTaskMoreThanDay(DateTime utcNow)
         {
-            var overdueTasks = await _context.TaskItems.Where(t => t.State == StateType.Overdue && t.EndDate < utcNow.AddDays(-1))
+            var overdueTasksIds = await _context.TaskItems.Where(t => t.State == StateType.Overdue && t.EndDate < utcNow.AddDays(-1)).Select(t => t.Id)
                 .ToListAsync();
+
+            var taskCategories = await _context.TasksCategories
+                .Where(tc => overdueTasksIds.Contains(tc.TaskId)).ToListAsync();
+
+            _context.TasksCategories.RemoveRange(taskCategories);
+
+            var overdueTasks = await _context.TaskItems.Where(ot => overdueTasksIds.Contains(ot.Id)).ToListAsync();
             _context.TaskItems.RemoveRange(overdueTasks);
             await _context.SaveChangesAsync();
         }

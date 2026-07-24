@@ -186,5 +186,14 @@ namespace TaskManagerApp.Repositories
 
             return initiatedFriendships.Concat(acceptedFriendships).OrderBy(u => u.Username).ToList();
         }
+
+        public async Task<List<User>> GetUsersWithStreaksAboutToEndAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+            List<User> users = await _context.Users.Where(u => u.LastActive != default && u.LastActive < today).ToListAsync();
+            return users;
+        }
+
+
     }
 }

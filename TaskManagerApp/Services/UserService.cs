@@ -89,6 +89,12 @@ namespace TaskManagerApp.Services
             {
                 throw new EmailorPasswordNotFoundException();
             }
+            await _emailCodeService.SendVerificationCode(testUser.Email);
+            var isVerified = await _emailCodeService.VerifyEmail(testUser.Email, loginUserDto.Code);
+            if (!isVerified)
+            {
+                throw new InvalidVerificationCodeException();
+            }
 
             return testUser.ToDto();
         }
@@ -178,14 +184,14 @@ namespace TaskManagerApp.Services
         public async Task SendReminderForTasksEmail()
         {
             List<TaskItem> tasks = await _taskItemRepository.GetAllAboutToStartAsync();
-            Console.WriteLine(tasks.Count); 
+            Console.WriteLine(tasks.Count);
             foreach (var task in tasks)
             {
-                
-                User user = await _userRepository.GetAsync(task.UserId);
-                if (task.LastSendReminder == null || task.LastSendReminder.Value.AddMinutes(user.ReminderInterval) <= DateTime.UtcNow)
+
+                User user = task.User;
+                if (task.LastSendReminder == default || task.LastSendReminder.Value.AddMinutes(user.ReminderInterval) <= DateTime.UtcNow)
                 {
-                    await _emailCodeService.SendReminderEmail(user.Username, user.Email, task);
+                    await _emailCodeService.SendReminderTaskEmail(user.Username, user.Email, task);
                     task.LastSendReminder = DateTime.UtcNow;
                 }
             }
@@ -228,6 +234,21 @@ namespace TaskManagerApp.Services
                 throw new EmailorPasswordNotFoundException();
             }
             await _emailCodeService.SendVerificationCode(user.Email);
+        }
+
+        public async Task SendReminderForStreakEmail()
+        {
+            var today = DateTime.UtcNow.Date;
+            List<User> users = await _userRepository.GetUsersWithStreaksAboutToEndAsync();
+            foreach (var user in users)
+            {
+                if (user.LastActive > today.AddDays(-1))
+                {
+                    await _emailCodeService.SendReminderForStreakEmail(user);
+                }
+               
+            }
+
         }
     }
 }
