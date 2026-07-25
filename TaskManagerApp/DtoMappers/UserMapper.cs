@@ -23,13 +23,13 @@ namespace TaskManagerApp.DtoMappers
                 LastActive = user.LastActive,
                 UserCode = user.UserCode,
 
-                TaskItemIds = user.TaskItems
-                    .Select(t => t.Id)
-                    .ToList(),
+                TaskItemIds = user.TaskItems?
+                .Select(t => t.Id)
+                .ToList() ?? new List<int>(),
 
-                Challenges = user.UsersChallenges
-                    .Select(uc => uc.ToDto())
-                    .ToList()
+                 Challenges = user.UsersChallenges?
+                .Select(uc => uc.ToDto())
+                .ToList() ?? new List<UsersChallengesDto>()
             };
         }
     }

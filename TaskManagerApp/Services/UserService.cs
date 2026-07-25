@@ -162,6 +162,103 @@ namespace TaskManagerApp.Services
             await _userRepository.UpdateUserInfoAsync(updateUserDto, user.Id);
         }
 
+        public async Task SendFriendRequest(int initiatorId, int relatedUserId)
+        {
+            User initiator = await _userRepository.GetAsync(initiatorId);
+            if (initiator == null)
+            {
+                throw new UserNotFoundException(initiatorId);
+            }
+            initiator.ToDto();
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            relatedUser.ToDto();
+            if (initiator == relatedUser)
+            {
+                throw new InvalidFriendRequestException();
+            }
+
+            UsersRelations usersRelation = new UsersRelations
+            {
+                Initiator = initiator,
+                InitiatorId = initiator.Id,
+                RelatedUserId = relatedUser.Id,
+                RelatedUser = relatedUser,
+
+            };
+            await _userRepository.SendRequestAsync(usersRelation);
+            //SEND EMAIL TO THE RELATEDUSER!
+
+        }
+
+        public async Task<List<UsersRelationsDto>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId)
+        {
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            List<UsersRelations> userRelations = await _userRepository.GetUnansweredRelationReceivedByUserIdAsync(relatedUserId);
+            List<UsersRelationsDto> usersRelationsDtos = new List<UsersRelationsDto>();
+            foreach (var userRelation in userRelations)
+            {
+                UsersRelationsDto userRelationsDto = new UsersRelationsDto
+                {
+                    Initiator = userRelation.Initiator.ToDto(),
+                    RelatedUser = userRelation.RelatedUser.ToDto(),
+                    RelationStatus = userRelation.RelationStatus,
+                    RelationType = userRelation.RelationType,
+                    CreatedAt = userRelation.CreatedAt,
+                    TimeOfAction = userRelation.TimeOfAction,
+                };
+                usersRelationsDtos.Add(userRelationsDto);
+                
+            }
+
+             return usersRelationsDtos;
+
+        }
+
+        public async Task AnswerToSentRequest(int relatedUserId, int userInitiatorId, RelationStatus relationStatus)
+        {
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            List<UsersRelations> pendingRequests = await _userRepository.GetUnansweredRelationReceivedByUserIdAsync(relatedUserId);
+
+            User userInitiator = await _userRepository.GetAsync(userInitiatorId);
+            if (userInitiator == null)
+            {
+                throw new UserNotFoundException(userInitiatorId);
+            }
+            foreach (UsersRelations userRelation in pendingRequests)
+            {
+                if (userRelation.InitiatorId == userInitiator.Id)
+                {
+                    if (relationStatus == RelationStatus.Accepted)
+                    {
+                        userRelation.RelationStatus = relationStatus;
+                        userRelation.RelationType = RelationType.Friend;
+                        userRelation.TimeOfAction = DateTime.UtcNow;
+                    }
+                    await _userRepository.RespondToRequestAsync(userRelation);
+                    break;
+                    
+                }
+            }
+
+            //SEND EMAIL TO THE INITIATOR
+           
+
+        }
+
+
+
         public async Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto)
         {
             var user = await _userRepository.GetAsync(reminderSettingsDto.Id);

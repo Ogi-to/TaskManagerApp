@@ -98,11 +98,15 @@ namespace TaskManagerApp.Repositories
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
 
-        public async Task<UsersRelations?> GetRelationAsync(int initiatorId, int relatedUserId)
+        public async Task<List<UsersRelations>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId)
         {
-            return await _context.UsersRelations.FirstOrDefaultAsync(r => r.InitiatorId == initiatorId && r.RelatedUserId == relatedUserId);
+            return await _context.UsersRelations
+                .Include(r => r.Initiator)
+                .Include(r => r.RelatedUser)
+                .Where(r => r.RelatedUserId == relatedUserId &&
+                            r.RelationStatus == RelationStatus.Pending)
+                .ToListAsync();
         }
-
 
         //public void RespondToRequest(UsersRelations relation)
         //{
@@ -112,22 +116,18 @@ namespace TaskManagerApp.Repositories
         //_context.SaveChanges();
         //}
 
-        public async Task<bool> RespondToRequestAsync(UsersRelations relation)
+        public async Task RespondToRequestAsync(UsersRelations relation)
         {
             var relationToModify = await _context.UsersRelations
                 .FirstOrDefaultAsync(r =>
                     r.InitiatorId == relation.InitiatorId &&
                     r.RelatedUserId == relation.RelatedUserId);
 
-            if (relationToModify == null)
-                return false;
-
             relationToModify.RelationStatus = relation.RelationStatus;
             relationToModify.RelationType = relation.RelationType;
+            relation.TimeOfAction = relation.TimeOfAction;
 
             await _context.SaveChangesAsync();
-
-            return true;
         }
 
         //public void SendRequest(UsersRelations relation)
@@ -138,6 +138,10 @@ namespace TaskManagerApp.Repositories
 
         public async Task SendRequestAsync(UsersRelations relation)
         {
+            relation.RelationStatus = RelationStatus.Pending;
+            relation.RelationType = null;
+            relation.CreatedAt = DateTime.UtcNow;
+            relation.TimeOfAction = null;
             await _context.UsersRelations.AddAsync(relation);
             await _context.SaveChangesAsync();
         }

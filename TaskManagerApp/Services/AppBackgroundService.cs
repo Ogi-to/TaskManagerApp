@@ -48,12 +48,12 @@ namespace TaskManagerApp.Services
                 if (now >= noon && _lastNoonReminder != today)
                 {
                     await userService.SendReminderForStreakEmail();
-                    _lastNoonReminder = now;
+                    _lastNoonReminder = today;
                 }
                 if (now >= evening && _lastEveningReminder != today)
                 {
                     await userService.SendReminderForStreakEmail();
-                    _lastEveningReminder = now;
+                    _lastEveningReminder = today;
                 }
                 // Wait 1 minute before checking again
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);

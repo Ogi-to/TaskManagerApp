@@ -15,6 +15,9 @@ namespace TaskManagerApp.InterfacesServices
         public Task UpdateStreak(UpdateUserDto user);
         public Task UpdateRank(UpdateUserDto user);
         public Task UpdatePoints(int userId, int points);
+        public Task SendFriendRequest(int initiatorId, int relatedUserId);
+        public Task AnswerToSentRequest(int relatedUserId, int userInitiatorId, RelationStatus relationStatus);
+        public Task<List<UsersRelationsDto>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId);
         public Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto);
         public Task ReSendVerificationCode(string email);
     }

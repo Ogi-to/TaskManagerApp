@@ -11,7 +11,7 @@ namespace TaskManagerApp.Interfaces
         public Task<User> GetByEmailAsync(string email);
         public Task<User> GetByUsernameAsync(string username);
         public Task<User> GetByUserCodeAsync(string userCode);
-        public Task<UsersRelations?> GetRelationAsync(int initiatorId, int relatedUserId);
+        public Task<List<UsersRelations>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId);
 
         public Task<User> CreateAccountAsync(User item);
         public Task DeleteAccountAsync(int id);
@@ -25,7 +25,7 @@ namespace TaskManagerApp.Interfaces
         public Task<List<User>> GetUsersWithStreaksAboutToEndAsync();
         public Task SendRequestAsync(UsersRelations relation);
 
-        public Task<bool> RespondToRequestAsync(UsersRelations relation);
+        public Task RespondToRequestAsync(UsersRelations relation);
 
         public Task<List<User>> GetFriendsListAsync(User item);
 
