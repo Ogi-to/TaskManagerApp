@@ -109,6 +109,22 @@
             {
                 await HandleError(context, 400, ex.Message);
             }
+            catch (ExceededNumberOfInvitesForOneDayException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (YouAreAlreadyFriendsException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (InviteIsStillPendingException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (TheUserHasBlockedYouException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
             catch (Exception ex)
             {
                 await HandleError(context, 500, ex.Message);

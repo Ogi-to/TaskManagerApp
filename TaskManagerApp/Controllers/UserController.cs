@@ -29,63 +29,102 @@ namespace TaskManagerApp.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterUserDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
             await _userService.RegisterUser(dto);
-            return Ok();
+            return Ok("User registered successfully.");
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login(LoginUserDto dto)
+        public async Task<ActionResult<UserDto>> Login([FromBody] LoginUserDto dto)
         {
-            return Ok(await _userService.LogInUser(dto));
+            var user = await _userService.LogInUser(dto);
+            return Ok(user);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(int id)
         {
             await _userService.DeleteAccount(id);
-            return Ok();
+            return NoContent();
         }
 
-        [HttpPut("{userId}/points/{points}")]
-        public async Task<IActionResult> UpdatePoints(int userId, int points)
+        [HttpPut("{id}/points")]
+        public async Task<IActionResult> UpdatePoints(int id, [FromQuery] int points)
         {
-            await _userService.UpdatePoints(userId, points);
-            return Ok();
+            await _userService.UpdatePoints(id, points);
+            return NoContent();
         }
 
-        [HttpPost("friend-request")]
+        [HttpPost("{initiatorId}/friend-request/{relatedUserId}")]
         public async Task<IActionResult> SendFriendRequest(int initiatorId, int relatedUserId)
         {
             await _userService.SendFriendRequest(initiatorId, relatedUserId);
             return Ok();
         }
 
-        [HttpGet("{relatedUserId}/pending-requests")]
-        public async Task<ActionResult<List<UsersRelations>>> GetPendingRequests(int relatedUserId)
+        [HttpGet("{id}/friend-requests")]
+        public async Task<ActionResult<List<UsersRelationsDto>>> GetPendingRequests(int id)
         {
-            return Ok(await _userService.GetUnansweredRelationReceivedByUserIdAsync(relatedUserId));
+            return Ok(await _userService.GetUnansweredRelationReceivedByUserIdAsync(id));
         }
 
-        [HttpPost("answer-request")]
-        public async Task<IActionResult> AnswerRequest(
+        [HttpPut("{relatedUserId}/friend-request/{initiatorId}")]
+        public async Task<IActionResult> AnswerFriendRequest(
             int relatedUserId,
-            int userInitiatorId,
-            RelationStatus relationStatus)
+            int initiatorId,
+            [FromQuery] RelationStatus relationStatus)
         {
             await _userService.AnswerToSentRequest(
                 relatedUserId,
-                userInitiatorId,
+                initiatorId,
                 relationStatus);
 
-            return Ok();
+            return NoContent();
+        }
+
+        [HttpPut("{initiatorId}/relation/{relatedUserId}")]
+        public async Task<IActionResult> UpdateRelation(
+            int initiatorId,
+            int relatedUserId,
+            [FromQuery] RelationType relationType)
+        {
+            await _userService.UpdateUserRelation(
+                initiatorId,
+                relatedUserId,
+                relationType);
+
+            return NoContent();
+        }
+
+        [HttpDelete("relations/old")]
+        public async Task<IActionResult> DeleteOldRelations()
+        {
+            await _userService.DeleteUserRelationByMoreThanAMonth();
+            return NoContent();
         }
 
         [HttpPut("reminder-settings")]
-        public async Task<IActionResult> UpdateReminderSettings(ReminderSettingsDto dto)
+        public async Task<IActionResult> UpdateReminderSettings(
+            [FromBody] ReminderSettingsDto dto)
         {
             await _userService.UpdateReminderSettings(dto);
+            return NoContent();
+        }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail(
+            [FromBody] VerifyEmailDto dto)
+        {
+            await _userService.VerifyEmail(dto);
+            return Ok("Email verified.");
+        }
+
+        [HttpPost("resend-verification")]
+        public async Task<IActionResult> ResendVerificationCode(
+            [FromQuery] string email)
+        {
+            await _userService.ReSendVerificationCode(email);
             return Ok();
         }
 
@@ -93,20 +132,6 @@ namespace TaskManagerApp.Controllers
         public async Task<IActionResult> SendTaskReminders()
         {
             await _userService.SendReminderForTasksEmail();
-            return Ok();
-        }
-
-        [HttpPost("verify-email")]
-        public async Task<IActionResult> VerifyEmail(VerifyEmailDto dto)
-        {
-            await _userService.VerifyEmail(dto);
-            return Ok();
-        }
-
-        [HttpPost("resend-code")]
-        public async Task<IActionResult> ResendVerificationCode([FromBody] string email)
-        {
-            await _userService.ReSendVerificationCode(email);
             return Ok();
         }
 

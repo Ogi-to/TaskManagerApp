@@ -170,6 +170,9 @@ namespace TaskManagerApp.Services
                 throw new UserNotFoundException(initiatorId);
             }
             initiator.ToDto();
+
+
+
             User relatedUser = await _userRepository.GetAsync(relatedUserId);
             if (relatedUser == null)
             {
@@ -179,6 +182,31 @@ namespace TaskManagerApp.Services
             if (initiator == relatedUser)
             {
                 throw new InvalidFriendRequestException();
+            }
+            UsersRelations usersRelations = await _userRepository.GetUserRelationAsync(initiator.Id, relatedUser.Id);
+            if (usersRelations != null)
+            {
+                if (usersRelations.RelationStatus == RelationStatus.Blocked)
+                {
+                    throw new TheUserHasBlockedYouException();
+                }
+                if (usersRelations.RelationStatus == RelationStatus.Pending)
+                {
+                    throw new InviteIsStillPendingException();
+                }
+                if (usersRelations.RelationStatus == RelationStatus.Accepted)
+                {
+                    throw new YouAreAlreadyFriendsException();
+                }
+
+            }
+
+            int permitedIvitesForToday = 20;
+            List<UsersRelations> initiatorInvitesForToday = await _userRepository.GetUserInvitesTodayAsync(initiator.Id);
+
+            if (initiatorInvitesForToday.Count > permitedIvitesForToday)
+            {
+                throw new ExceededNumberOfInvitesForOneDayException(permitedIvitesForToday);
             }
 
             UsersRelations usersRelation = new UsersRelations
@@ -190,7 +218,7 @@ namespace TaskManagerApp.Services
 
             };
             await _userRepository.SendRequestAsync(usersRelation);
-            //SEND EMAIL TO THE RELATEDUSER!
+            //SEND EMAIL TO THE RELATED USER!
 
         }
 
@@ -240,10 +268,23 @@ namespace TaskManagerApp.Services
             {
                 if (userRelation.InitiatorId == userInitiator.Id)
                 {
+                    //SEND EMAIL TO INFORM THE INITIATOR
                     if (relationStatus == RelationStatus.Accepted)
                     {
                         userRelation.RelationStatus = relationStatus;
                         userRelation.RelationType = RelationType.Friend;
+                        userRelation.TimeOfAction = DateTime.UtcNow;
+                    }
+                    if (relationStatus == RelationStatus.Blocked)
+                    {
+                        userRelation.RelationStatus = relationStatus;
+                        userRelation.RelationType = RelationType.Blocked;
+                        userRelation.TimeOfAction = DateTime.UtcNow;
+                    }
+                    if (relationStatus == RelationStatus.Rejected)
+                    {
+                        userRelation.RelationStatus = relationStatus;
+                        userRelation.RelationType = null;
                         userRelation.TimeOfAction = DateTime.UtcNow;
                     }
                     await _userRepository.RespondToRequestAsync(userRelation);
@@ -251,12 +292,75 @@ namespace TaskManagerApp.Services
                     
                 }
             }
-
-            //SEND EMAIL TO THE INITIATOR
            
 
         }
 
+        public async Task UpdateUserRelation(int initiatorId, int relatedUserId, RelationType relationType)
+        {
+            User user = await _userRepository.GetAsync(initiatorId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(initiatorId);
+            }
+
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            UsersRelations usersRelation = await _userRepository.GetUserRelationAsync(user.Id, relatedUser.Id);
+            if (usersRelation == null)
+            {
+                throw new RelationNotFoundException();
+            }
+
+            if (usersRelation.RelationType == RelationType.Friend)
+            {
+                if (relationType == RelationType.Blocked)
+                {
+                    //SEND EMAIL THAT YOU HAVE BEEN BLOCKED
+                    usersRelation.RelationType = relationType;
+                }
+                if (relationType == RelationType.Unfriend)
+                {
+                    //SEND EMAIL THAT YOU ARE NO LONGER FRIENDS
+                    usersRelation.RelationType = relationType;
+                }
+
+            }
+            if (usersRelation.RelationType == RelationType.Blocked)
+            {
+                if (relationType == RelationType.Friend)
+                {
+                    //SEND EMAIL THAT YOU HAVE BEEN UNBLOCKED
+                    usersRelation.RelationType = relationType;
+                }
+               
+            }
+            if (usersRelation.RelationType == RelationType.Unfriend)
+            {
+                if (relationType == RelationType.Blocked)
+                {
+                    //SEND EMAIL THAT YOU HAVE BEEN BLOCKED
+                    usersRelation.RelationType = relationType;
+                }
+                if (relationType == RelationType.Friend)
+                {
+                    //SEND EMAIL THAT YOU ARE FRIENDS
+                    usersRelation.RelationType = relationType;
+                }
+            }
+            //DOES THE SAME JOB AS AN UPDATE METHOD.
+            await _userRepository.RespondToRequestAsync(usersRelation);
+           
+
+        }
+
+        public async Task DeleteUserRelationByMoreThanAMonth()
+        {
+            await _userRepository.DeleteAllUnansweredUserRelationsByMoreThanAMonth();
+        }
 
 
         public async Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto)

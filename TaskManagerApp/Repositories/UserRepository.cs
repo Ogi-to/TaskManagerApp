@@ -98,6 +98,33 @@ namespace TaskManagerApp.Repositories
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
 
+
+        public async Task<List<UsersRelations>> GetUserInvitesTodayAsync(int userId)
+        {
+            var today = DateTime.UtcNow.Date;
+            List<UsersRelations> usersRelations = await _context.UsersRelations.Where(ur => ur.InitiatorId == userId && ur.CreatedAt.Date == today).ToListAsync();
+            return usersRelations;
+        }
+
+        public async Task<UsersRelations> GetUserRelationAsync(int user1Id, int user2Id)
+        {
+            //DOESNT MATTER WHO IS THE INITIATOR. ONLY MATTER IF THE USERS ARE IN A RELATION
+            UsersRelations usersRelations = await _context.UsersRelations.Where(ur => (ur.InitiatorId == user1Id || ur.InitiatorId == user2Id) 
+            && (ur.RelatedUserId == user1Id || ur.RelatedUserId == user2Id)).FirstOrDefaultAsync();
+            return usersRelations;
+        }
+
+        public async Task DeleteAllUnansweredUserRelationsByMoreThanAMonth()
+        {
+            var today = DateTime.UtcNow.Date;
+            List<UsersRelations> usersRelations = await _context.UsersRelations.Where(ur => (ur.CreatedAt.Date.AddDays(30) <= today) 
+            && (ur.RelationStatus == RelationStatus.Pending)).ToListAsync();
+            _context.RemoveRange(usersRelations);
+            _context.SaveChanges();
+        }
+
+        
+
         public async Task<List<UsersRelations>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId)
         {
             return await _context.UsersRelations

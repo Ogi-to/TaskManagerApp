@@ -18,6 +18,8 @@ namespace TaskManagerApp.InterfacesServices
         public Task SendFriendRequest(int initiatorId, int relatedUserId);
         public Task AnswerToSentRequest(int relatedUserId, int userInitiatorId, RelationStatus relationStatus);
         public Task<List<UsersRelationsDto>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId);
+        public Task UpdateUserRelation(int initiatorId, int relatedUserId, RelationType relationType);
+        public Task DeleteUserRelationByMoreThanAMonth();
         public Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto);
         public Task ReSendVerificationCode(string email);
     }

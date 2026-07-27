@@ -28,6 +28,7 @@ namespace TaskManagerApp.Data.Models
     public enum RelationType
     {
         Friend,
+        Unfriend,
         Blocked
     }
 
@@ -35,7 +36,8 @@ namespace TaskManagerApp.Data.Models
     {
         Pending,
         Accepted,
-        Rejected
+        Rejected,
+        Blocked
     }
 }
 
