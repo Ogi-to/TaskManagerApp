@@ -21,7 +21,12 @@ namespace TaskManagerApp.Data
             new State { Id = 2, Type = StateType.InProgress },
             new State { Id = 3, Type = StateType.Completed },
             new State { Id = 4, Type = StateType.Overdue }
+
         );
+
+            modelBuilder.Entity<TasksParticipants>().Property(tp => tp.Status).HasConversion<string>();
+            modelBuilder.Entity<UsersRelations>().Property(ur => ur.RelationStatus).HasConversion<string>();
+            modelBuilder.Entity<UsersRelations>().Property(ur => ur.RelationType).HasConversion<string>();
 
             //For USERS RELATIONS
             modelBuilder.Entity<UsersRelations>()
@@ -71,6 +76,22 @@ namespace TaskManagerApp.Data
                 .HasForeignKey(tc => tc.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            //FOR TASKS PARTICIPANTS
+            modelBuilder.Entity<TasksParticipants>()
+              .HasKey(tc => new { tc.TaskId, tc.UserId });
+
+            modelBuilder.Entity<TasksParticipants>()
+                .HasOne(tc => tc.TaskItem)
+                .WithMany(t => t.TaskParticipants)
+                .HasForeignKey(tc => tc.TaskId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TasksParticipants>()
+                .HasOne(tc => tc.User)
+                .WithMany(c => c.TaskParticipants)
+                .HasForeignKey(tc => tc.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             //For USER STATS
             modelBuilder.Entity<User>()
             .HasOne(u => u.Stats)
@@ -93,6 +114,7 @@ namespace TaskManagerApp.Data
         public DbSet<UserStats> UserStats { get; set; }
         public DbSet<State> States { get; set; }
         public DbSet<EmailCode> EmailCodes { get; set; }
+        public DbSet<TasksParticipants> TasksParticipants { get; set; }
     }
 }
 

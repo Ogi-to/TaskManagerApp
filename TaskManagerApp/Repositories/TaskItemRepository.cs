@@ -23,9 +23,11 @@ namespace TaskManagerApp.Repositories
         public async Task DeleteAsync(int itemId)
         {
             var item = await _context.TaskItems.FindAsync(itemId);
+            List<TasksParticipants> tasksParticipants = await _context.TasksParticipants.Where(tp => tp.TaskId == itemId).ToListAsync();
             // the delete behaviour in "on model creating" is restrict, so the relationships have to be updated manually
             _context.TasksCategories.RemoveRange(item.TasksCategories);
             _context.TaskItems.Remove(item);
+            _context.TasksParticipants.RemoveRange(tasksParticipants);
             await _context.SaveChangesAsync();
         }
 

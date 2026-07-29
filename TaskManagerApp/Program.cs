@@ -28,6 +28,7 @@ namespace TaskManagerApp
             builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<IEmailCodeRepository, EmailCodeRepository>();
+            builder.Services.AddScoped<ITasksParticipantsRepository, TasksParticipantsRepository>();
 
 
             builder.Services.AddScoped<IUserService, UserService>();
@@ -39,6 +40,7 @@ namespace TaskManagerApp
             builder.Services.AddScoped<IStateService, StateService>();
             builder.Services.AddScoped<IRankService, RankService>();
             builder.Services.AddScoped<IUserStatsService, UserStatsService>();
+            builder.Services.AddScoped<ITasksParticipantsService, TasksParticipantsService>();
 
             builder.Services.AddHostedService<AppBackgroundService>();
 

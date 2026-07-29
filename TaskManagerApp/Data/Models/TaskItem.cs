@@ -34,6 +34,8 @@ namespace TaskManagerApp.Data.Models
 
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
 
+        public List<TasksParticipants> TaskParticipants { get; set; } = new List<TasksParticipants>();
+
     }
 }
  

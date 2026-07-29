@@ -2,6 +2,7 @@
 using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
+using TaskManagerApp.InterfacesRepositories;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -14,14 +15,16 @@ namespace TaskManagerApp.Services
         private readonly IUserService _userService;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IUserStatsService _userStatsService;
+        private readonly ITasksParticipantsRepository _tasksParticipantsRepository; 
         public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService,
-        ICategoryRepository categoryRepository, IUserStatsService userStatsService)
+        ICategoryRepository categoryRepository, IUserStatsService userStatsService, ITasksParticipantsRepository tasksParticipantsRepository)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;
             _userService = userService;
             _categoryRepository = categoryRepository;
             _userStatsService = userStatsService;
+            _tasksParticipantsRepository = tasksParticipantsRepository;
         }
         public async Task AddTaskAsync(AddTaskDto task)
         {
@@ -216,31 +219,42 @@ namespace TaskManagerApp.Services
                 throw new TaskAlreadyOverdueException();
             }
 
+
             var existingUser = await _userRepository.GetAsync(existingTask.UserId);
             if (existingUser == null)
             {
                 throw new UserNotAssignedToTaskException();
             }
 
-            List<TaskItem> tasksCompletedToday = await _taskItemRepository.GetCompletedTasksTodayByUser(existingUser.Id);
-
-            //ONLY 5 TASKS WILL GIVE POINTS IN ONE DAY. SAFETY MESSURE FOR CHEATING! 
-            if (tasksCompletedToday.Count <= 5)
+            List<TasksParticipants> usersInTask = await _tasksParticipantsRepository.GetJoinedInTaskByTaskId(existingTask.Id);
+            foreach (var participant in usersInTask)
             {
-                var taskPoints = 200; // Assuming each completed task gives 200 points
-                await _userService.UpdatePoints(existingUser.Id, taskPoints);
+                await RewardUserForCompletedTask(participant.UserId);
             }
 
-            var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
-            userStats.TasksCompleted += 1;
 
+            await RewardUserForCompletedTask(existingUser.Id);
 
-
-            await _userStatsService.UpdateUserStatsAsync(userStats);
 
             await _taskItemRepository.CompleteTask(existingTask.Id);
 
 
+        }
+
+        private async Task RewardUserForCompletedTask(int userId)
+        {
+            var completedToday =
+                await _taskItemRepository.GetCompletedTasksTodayByUser(userId);
+
+            if (completedToday.Count < 5)
+            {
+                await _userService.UpdatePoints(userId, 200);
+            }
+
+            var stats = await _userStatsService.ShowUserStatsByIdAsync(userId);
+            stats.TasksCompleted++;
+
+            await _userStatsService.UpdateUserStatsAsync(stats);
         }
 
         public async Task MarkOverdueTasksAsync()

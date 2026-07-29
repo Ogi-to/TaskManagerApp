@@ -49,6 +49,8 @@ namespace TaskManagerApp.Data.Models
 
         public List<UsersRelations> ReceivedRelations { get; set; } = new List<UsersRelations>();
 
+        public List<TasksParticipants> TaskParticipants { get; set; } = new List<TasksParticipants>();
+
         public UserStats Stats { get; set; }
     }
 }
