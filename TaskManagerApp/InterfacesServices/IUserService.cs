@@ -6,7 +6,8 @@ namespace TaskManagerApp.InterfacesServices
     public interface IUserService
     {
         public Task RegisterUser(RegisterUserDto registerUserDto);
-        public Task<UserDto> LogInUser(LoginUserDto loginUserDto);
+        public Task LogInUser(LoginUserDto loginUserDto, string? ipAddress);
+        public Task<UserDto> UseTheSendCodeForLogin(VerifyEmailDto verifyEmailDto);
         public Task<UserDto> GetUserById(int id);
         public Task DeleteAccount(int userId);
         public Task VerifyEmail(VerifyEmailDto verifyEmailDto);
@@ -22,5 +23,6 @@ namespace TaskManagerApp.InterfacesServices
         public Task DeleteUserRelationByMoreThanAMonth();
         public Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto);
         public Task ReSendVerificationCode(string email);
+        public Task<List<TaskDto>> GetAllFinishedTasksByUserId(int userId);
     }
 }

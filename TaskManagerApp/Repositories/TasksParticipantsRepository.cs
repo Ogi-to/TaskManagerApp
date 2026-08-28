@@ -17,7 +17,7 @@ namespace TaskManagerApp.Repositories
         public async Task DeleteByBoth(int taskId, int userId)
         {
             TasksParticipants tasksParticipants = await _context.TasksParticipants.Where(tp => tp.TaskId == taskId && tp.UserId == userId).FirstOrDefaultAsync();
-            _context.RemoveRange(tasksParticipants);
+            _context.TasksParticipants.Remove(tasksParticipants);
             await _context.SaveChangesAsync();
 
         }
@@ -46,6 +46,14 @@ namespace TaskManagerApp.Repositories
             .FirstOrDefaultAsync();
         }
 
+        public async Task<List<TaskItem>> GetAllFinishedSharedTasksByUserId(int userId)
+        {
+            return await _context.TasksParticipants.Where(tp => tp.UserId == userId && 
+            tp.Status == Status.Accepted && tp.TaskItem.State == StateType.Completed).Select(tp => tp.TaskItem).Include(t => t.TasksCategories)
+            .ThenInclude(tc => tc.Category).ToListAsync();
+               
+        }
+
         public async Task<List<TasksParticipants>> GetByTaskId(int taskId)
         {
             return await _context.TasksParticipants
@@ -66,7 +74,6 @@ namespace TaskManagerApp.Repositories
         public async Task<List<TasksParticipants>> GetByUserId(int userId)
         {
              return await _context.TasksParticipants
-             .Include(tp => tp.User)
              .Include(tp => tp.TaskItem)
                  .ThenInclude(t => t.TasksCategories)
                      .ThenInclude(tc => tc.Category)

@@ -15,13 +15,15 @@ namespace TaskManagerApp.Services
         private readonly ITasksParticipantsRepository _tasksParticipantsRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITaskItemRepository _taskItemRepository;
+        private readonly IEmailService _emailService;
 
         public TasksParticipantsService(ITasksParticipantsRepository tasksParticipantsRepository, IUserRepository userRepository,
-        ITaskItemRepository taskItemRepository)
+        ITaskItemRepository taskItemRepository, IEmailService emailService)
         {
             _tasksParticipantsRepository = tasksParticipantsRepository;
             _userRepository = userRepository;
             _taskItemRepository = taskItemRepository;
+            _emailService = emailService;
         }
 
         public async Task<List<TasksParticipantsDto>> GetByUserId(int userId)
@@ -75,7 +77,7 @@ namespace TaskManagerApp.Services
                     User = taskParticipant.User.ToDto(),
                     TaskItem = taskParticipant.TaskItem.ToDto(),
                     Status = taskParticipant.Status
-                };
+                }; 
                 tasksParticipantsDtos.Add(tasksParticipantsDto);
             }
 
@@ -130,7 +132,7 @@ namespace TaskManagerApp.Services
                 throw new UserDoesntHaveTasksException();
             }
 
-            await _tasksParticipantsRepository.DeleteByBoth(tasksParticipants.UserId, tasksParticipants.TaskId);
+            await _tasksParticipantsRepository.DeleteByBoth(tasksParticipants.TaskId, tasksParticipants.UserId);
         }
 
         public async Task InviteFriendsToTask(int ownerId, int friendId, int taskId)
@@ -154,6 +156,10 @@ namespace TaskManagerApp.Services
 
             UsersRelations usersRelations = await _userRepository.GetUserRelationAsync(owner.Id, friend.Id);
             if (usersRelations == null)
+            {
+                throw new YouAreNotFriendsWithThisUserException();
+            }
+            if (usersRelations.RelationType == RelationType.Unfriend || usersRelations.RelationType == RelationType.Blocked)
             {
                 throw new YouAreNotFriendsWithThisUserException();
             }
@@ -201,7 +207,8 @@ namespace TaskManagerApp.Services
 
                 };
                 await _tasksParticipantsRepository.Add(tasksParticipants1);
-
+                //SEND EMAIL TO THE FRIEND THAT THEY HAVE BEEN INVITED TO THE TASK
+                await _emailService.InviteFriendToTaskEmail(friend.Email, friend.Username, owner.Username, taskItem.Name, taskItem.StartDate);
             }
 
         }
@@ -229,9 +236,15 @@ namespace TaskManagerApp.Services
             {
                 throw new YouAreNotInvitedForThisTaskException();
             }
+            if (tasksParticipants.Status != Status.Pending)
+            {
+                throw new YouHaveAlreadyAnsweredThisInviteException();
+            }
 
             tasksParticipants.Status = status;
             await _tasksParticipantsRepository.Update(tasksParticipants);
+            //SEND EMAIL TO THE OWNER THAT THE FRIEND HAS ACCEPTED OR DECLINED THE INVITE
+            await _emailService.AnswerTaskInviteInforOwner(taskItem.User.Email, taskItem.User.Username, friend.Username, taskItem.Name, taskItem.StartDate, status);
         }
     }
 }

@@ -23,6 +23,7 @@ namespace TaskManagerApp.Interfaces
         public Task CompleteTask(int taskId);
 
         public Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow);
+        public Task<List<TaskItem>> GetAllFinishedTasksByUserId(int userId);
         public Task DeleteOverdueTaskMoreThanDay(DateTime utcNow);
     }
 }

@@ -115,6 +115,7 @@ namespace TaskManagerApp.Data
         public DbSet<State> States { get; set; }
         public DbSet<EmailCode> EmailCodes { get; set; }
         public DbSet<TasksParticipants> TasksParticipants { get; set; }
+        public DbSet<LoginAttempt> LoginAttempts { get; set; }
     }
 }
 

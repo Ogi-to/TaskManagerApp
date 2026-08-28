@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
@@ -18,7 +19,7 @@ namespace TaskManagerApp.Services
             var categories = await _repository.GetAllAsync();
             if (categories == null || categories.Count == 0)
             {
-                throw new Exception("There are no categories.");
+                throw new CategoryNotFoundException();
             }
             return categories;
         }
@@ -28,7 +29,7 @@ namespace TaskManagerApp.Services
             var existingCategory = await _repository.GetAsync(categoryId);
             if (existingCategory == null)
             {
-                throw new Exception($"Category with ID {categoryId} was not found.");
+                throw new CategoryNotFoundException();
             }
 
             return existingCategory;

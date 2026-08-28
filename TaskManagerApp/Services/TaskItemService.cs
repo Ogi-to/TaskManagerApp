@@ -56,7 +56,7 @@ namespace TaskManagerApp.Services
 
             if (categories.Count != task.CategoryIds.Count)
             {
-                throw new Exception("These categories do not exist.");
+                throw new CategoryNotFoundException();
             }
 
    

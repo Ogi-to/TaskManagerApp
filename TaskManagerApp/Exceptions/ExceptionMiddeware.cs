@@ -125,6 +125,102 @@
             {
                 await HandleError(context, 400, ex.Message);
             }
+            catch(CantJoinTaskHasEndedException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(CantSendTaskHasEndedException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(FriendHasAlreadyAcceptedThisTaskException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(FriendHasDeclinedTheInvitationException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(IdenticalUserIdException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(RelationAlreadyExistsException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(RelationNotFoundException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(TaskDoesntHaveSharedUsersException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(TooManyFailedLoginAttemptsException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(UserDoesntHaveSharedTasksException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(YouAreNotInvitedForThisTaskException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(YouHaveAlreadyAnsweredThisInviteException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (YouAreNotFriendsWithThisUserException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(ChallengeNotFoundException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
+            catch(ChallengeAlreadyCompletedException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (UserHasNotJoinedTheChallengeException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(ChallengeHasNotStartedException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch (CategoryNotFoundException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
+            catch(NoChallengesFoundForThisCategoryException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
+            catch(ThereAreNoChallengesForThisCategoryException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
+            catch(UserHasntJoinedAnyChallengesException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(UserHasntCompletedAnyChallengesException ex)
+            {
+                await HandleError(context, 400, ex.Message);
+            }
+            catch(RankNotFoundException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
+            catch(StateNotFoundException ex)
+            {
+                await HandleError(context, 404, ex.Message);
+            }
             catch (Exception ex)
             {
                 await HandleError(context, 500, ex.Message);

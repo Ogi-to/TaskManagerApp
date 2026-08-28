@@ -148,6 +148,194 @@ namespace TaskManagerApp.Services
             }
         }
 
+        public async Task SendFriendRequestToTheRelatedUserEmail(UserDto initiator, UserDto receiver)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.Subject = "You have a new friend request!";
+            message.To.Add($"{receiver.Email}");
+            var html = await File.ReadAllTextAsync("Templates/FriendRequestToTheRelatedUserEmail.html");
+
+            // Replace placeholders with actual values
+            html = html.Replace("{{UserName}}", receiver.Username);
+            html = html.Replace("{{InitiatorName}}", initiator.Username);
+            //URL should be changed to the actual login page of the application
+            html = html.Replace("{{LoginUrl}}", "https://yourapp.com/login");
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
+
+        public async Task AnswerFriendRequestInformInitiatorEmail(UsersRelationsDto usersRelationsDto)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.Subject = "Answer received for your friend request!";
+            message.To.Add($"{usersRelationsDto.Initiator.Email}");
+            var html = await File.ReadAllTextAsync("Templates/AnswerFriendRequestInformInitiatorEmail.html");
+
+            // Replace placeholders with actual values
+            html = html.Replace("{{InitiatorName}}", usersRelationsDto.Initiator.Username);
+            html = html.Replace("{{ReceiverName}}", usersRelationsDto.RelatedUser.Username);
+            string relationStatus;
+            if (usersRelationsDto.RelationStatus == RelationStatus.Accepted)
+            {
+                relationStatus = "accepted";
+            }
+            else if (usersRelationsDto.RelationStatus == RelationStatus.Rejected)
+            {
+                relationStatus = "rejected";
+            }
+            else
+            {
+                relationStatus = "blocked";
+            }
+            html = html.Replace("{{Response}}", relationStatus);
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
+
+        public async Task UpdateRelationShipStatusInformBothEmail(string email, string initiatorName, string reciverName, RelationType relationType)
+        {
+
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.Subject = "Your relationship status has been updated!";
+            message.To.Add($"{email}");
+
+            var html = await File.ReadAllTextAsync("Templates/UpdateRelationShipStatusInformBothEmail.html");
+
+            // Replace placeholders with actual values
+            html = html.Replace("{{InitiatorName}}", initiatorName);
+            html = html.Replace("{{RecipientName}}", reciverName);
+            string relation;
+            if (relationType == RelationType.Friend)
+            {
+                relation = "Friends";
+            }
+            else if (relationType == RelationType.Unfriend)
+            {
+                relation = "Unfriended";
+            }
+            else
+            {
+                relation = "Blocked";
+            }
+            html = html.Replace("{{NewStatus}}", relation);
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
+
+        public async Task InviteFriendToTaskEmail(string friendEmail, string friendName, string ownerName, string taskName, DateTime taskStartDate)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.Subject = "You have been invited to a task!";
+            message.To.Add($"{friendEmail}");
+
+            var html = await File.ReadAllTextAsync("Templates/InviteFriendToTaskEmail.html");
+
+            // Replace placeholders with actual values
+            html = html.Replace("{{ReceiverName}}", friendName);
+            html = html.Replace("{{InitiatorName}}", ownerName);
+            html = html.Replace("{{TaskName}}", taskName);
+            html = html.Replace("{{TaskStartDate}}", taskStartDate.ToString("MM-dd H:mm"));
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
+
+        public async Task AnswerTaskInviteInforOwner(string ownerEmail, string ownerName, string friendName, string taskName, DateTime taskStartDate, Status status)
+        {
+            var message = new MailMessage();
+            message.From = new MailAddress("oginik7@gmail.com");
+            message.Subject = "Your Task Invite Response";
+            message.To.Add($"{ownerEmail}");
+
+            var html = await File.ReadAllTextAsync("Templates/AnswerTaskInviteInformOwner.html");
+
+            // Replace placeholders with actual values
+            html = html.Replace("{{OwnerName}}", ownerName);
+            html = html.Replace("{{ReceiverName}}", friendName);
+            html = html.Replace("{{TaskName}}", taskName);
+            html = html.Replace("{{TaskStartDate}}", taskStartDate.ToString("MM-dd H:mm"));
+
+            string response;
+            if (status == Status.Accepted)
+            {
+                response = "accepted";
+            }
+            else
+            {
+                response = "declined";
+            }
+            html = html.Replace("{{Response}}", response);
+
+            message.IsBodyHtml = true;
+            message.Body = html;
+
+            using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtp.Credentials = new NetworkCredential(
+                    "oginik7@gmail.com",
+                    "dvvx jezo khrw poau"
+                );
+
+                smtp.EnableSsl = true;
+
+                smtp.Send(message);
+            }
+        }
 
     }
    

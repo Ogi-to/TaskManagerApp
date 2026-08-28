@@ -36,13 +36,14 @@ namespace TaskManagerApp.Repositories
             return await _context.TaskItems
                    .Include(t => t.TasksCategories)
                        .ThenInclude(tc => tc.Category)
+                    .Include(u => u.User)
                    .FirstOrDefaultAsync(t => t.Id == id);
         }
         public async Task<List<TaskItem>> GetAllByUserAsync(int userId)
         {
-
+        
                 return await _context.TaskItems
-           .Where(t => t.UserId == userId).ToListAsync();
+           .Where(t => t.UserId == userId).Include(tp => tp.TaskParticipants).Where(tp => tp.UserId == userId).ToListAsync();
         }
 
         public async Task<List<TaskItem>> GetAllAboutToStartAsync()
@@ -64,6 +65,12 @@ namespace TaskManagerApp.Repositories
            .ToListAsync();
         }
 
+        public async Task<List<TaskItem>> GetAllFinishedTasksByUserId(int userId)
+        {
+            return await _context.TaskItems
+                .Where(t => t.UserId == userId && t.State == StateType.Completed)
+                .ToListAsync();
+        }
 
         public async Task UpdateAsync(TaskItem item)
         {

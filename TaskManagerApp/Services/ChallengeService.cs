@@ -37,15 +37,15 @@ namespace TaskManagerApp.Services
             var existingChallenge = await _challengeRepository.GetAsync(challengeId);
             if (existingChallenge == null)
             {
-                throw new Exception($"Challenge with ID {challengeId} doesn't exist.");
+                throw new ChallengeNotFoundException();
             }
             if (existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId && uc.State == StateType.Completed).Any())
             {
-                throw new Exception($"User with ID {userId} has already completed the challenge with ID {challengeId}.");
+                throw new ChallengeAlreadyCompletedException();
             }
             if (!existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId).Any())
             {
-                throw new Exception($"User with ID {userId} hasn't joined the challenge with ID {challengeId}.");
+                throw new UserHasNotJoinedTheChallengeException();
             }
             await _userService.UpdatePoints(existingUser.Id, existingChallenge.Points);
 
@@ -67,15 +67,15 @@ namespace TaskManagerApp.Services
             var existingChallenge = await _challengeRepository.GetAsync(challengeId);
             if (existingChallenge == null)
             {
-                throw new Exception($"Challenge with ID {challengeId} doesn't exist.");
+                throw new ChallengeNotFoundException();
             }
             if (existingUser.UsersChallenges.Where(uc => uc.ChallengeId == challengeId).Any())
             {
-                throw new Exception($"User with ID {userId} has already joined the challenge with ID {challengeId}.");
+                throw new ChallengeAlreadyCompletedException();
             }
             if (existingChallenge.StartDate == default || existingChallenge.EndDate == default)
             {
-                throw new Exception("Challenge has not started!");
+                throw new ChallengeHasNotStartedException();
             }
 
             await _challengeRepository.JoinChallengeAsync(existingChallenge.Id, existingUser.Id);
@@ -105,12 +105,12 @@ namespace TaskManagerApp.Services
             var existingCategory = await _categoryRepository.GetAsync(categoryId);
             if (existingCategory == null)
             {
-                throw new Exception($"Category with ID {categoryId} doesn't exist.");
+                throw new CategoryNotFoundException();
             }
             var sortedChallenges = await _challengeRepository.GetAllByCategoryAsync(categoryId);
             if (sortedChallenges == null || sortedChallenges.Count == 0)
             {
-                throw new Exception("There are no challenges from this category.");
+                throw new NoChallengesFoundForThisCategoryException();
             }
             return sortedChallenges.Select(c => new ChallengeDto
             {
@@ -132,7 +132,7 @@ namespace TaskManagerApp.Services
             var sortedChallenges = await _challengeRepository.GetAllByLevelAsync(levelNumber);
             if (sortedChallenges == null || sortedChallenges.Count == 0)
             {
-                throw new Exception("There are no challenges with the specified level number.");
+                throw new ThereAreNoChallengesForThisCategoryException();
             }
             return sortedChallenges.Select(c => new ChallengeDto
             {
@@ -158,10 +158,11 @@ namespace TaskManagerApp.Services
             }
             if (existingUser.UsersChallenges == null || !existingUser.UsersChallenges.Any())
             {
-                throw new Exception($"User with ID {userId} has not joined any challenges.");
+                throw new UserHasntJoinedAnyChallengesException();
             }
 
             var challenges = await _challengeRepository.GetChallengesByUserAsync(userId);
+
             return challenges.Select(c => new ChallengeDto
             {
                 Id = c.Id,
@@ -186,11 +187,11 @@ namespace TaskManagerApp.Services
             }
             if (existingUser.UsersChallenges == null || !existingUser.UsersChallenges.Any())
             {
-                throw new Exception($"User with ID {userId} has not joined any challenges.");
+                throw new UserHasntJoinedAnyChallengesException();
             }
             if (!existingUser.UsersChallenges.Where(uc => uc.State == StateType.Completed).Any())
             {
-                throw new Exception($"User with ID {userId} has not completed any challenges.");
+                throw new UserHasntCompletedAnyChallengesException();
             }
 
             var completedChallenges = await _challengeRepository.GetAllCompletedByUserAsync(userId);
@@ -214,7 +215,7 @@ namespace TaskManagerApp.Services
             var existingChallenge = await _challengeRepository.GetAsync(challengeId);
             if (existingChallenge == null)
             {
-                throw new Exception($"Challenge with ID {challengeId} not found.");
+                throw new ChallengeNotFoundException();
             }
 
             return new ChallengeDto
@@ -249,6 +250,17 @@ namespace TaskManagerApp.Services
             }
 
 
+        }
+
+        public async Task<List<ChallengeDto>> GetAllActive()
+        {
+            var activeChallenges = await _challengeRepository.GetAllActiveAsync();
+            List<ChallengeDto> challengeDtos = new List<ChallengeDto>();
+            foreach (var challenge in activeChallenges)
+            {
+                challengeDtos.Add(challenge.ToDto());
+            }
+            return challengeDtos;
         }
 
         public async Task RemoveChallengesActivity()

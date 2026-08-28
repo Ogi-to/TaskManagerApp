@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
 using TaskManagerApp.Data.Models;
@@ -6,6 +7,7 @@ using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
+using TaskManagerApp.Services;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
 
@@ -17,10 +19,13 @@ namespace TaskManagerApp.Controllers
     {
         private readonly IUserService _userService;
 
+
         public UserController(IUserService userService)
         {
             _userService = userService;
         }
+
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDto>> GetUserById(int id)
@@ -28,6 +33,7 @@ namespace TaskManagerApp.Controllers
             return Ok(await _userService.GetUserById(id));
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
@@ -35,10 +41,25 @@ namespace TaskManagerApp.Controllers
             return Ok("User registered successfully.");
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login([FromBody] LoginUserDto dto)
+        public async Task<ActionResult> Login([FromBody] LoginUserDto loginUserDto)
         {
-            var user = await _userService.LogInUser(dto);
+            string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            await _userService.LogInUser(loginUserDto, ipAddress);
+
+            return Ok(new
+            {
+                Message = "Verification code has been sent to your email."
+            });
+        }
+
+        [HttpPost("verify-login")]
+        public async Task<ActionResult<UserDto>> VerifyLogin([FromBody] VerifyEmailDto verifyLoginDto)
+        {
+            UserDto user = await _userService.UseTheSendCodeForLogin(verifyLoginDto);
+
             return Ok(user);
         }
 
@@ -112,6 +133,8 @@ namespace TaskManagerApp.Controllers
             return NoContent();
         }
 
+
+        [AllowAnonymous]
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail(
             [FromBody] VerifyEmailDto dto)

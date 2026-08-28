@@ -17,9 +17,13 @@ namespace TaskManagerApp.Services
         private readonly HashPasswordService _hashPasswordService;
         private readonly IUserStatsService _userStatsService;
         private readonly ITaskItemRepository _taskItemRepository;
+        private readonly ITasksParticipantsRepository _tasksParticipantsRepository;
+        private readonly ILoginAttemptRepository _loginAttemptRepository;
+        private readonly IHttpContextAccessor _contextAccessor;
 
         public UserService(IUserRepository userRepository, IRankRepository rankRepository, ITaskItemRepository taskItemRepository,
-            IEmailService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService)
+            IEmailService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService,
+            ITasksParticipantsRepository tasksParticipantsRepository, ILoginAttemptRepository loginAttemptRepository, IHttpContextAccessor contextAccessor)
         {
             _userRepository = userRepository;
             _rankRepository = rankRepository;
@@ -27,7 +31,9 @@ namespace TaskManagerApp.Services
             _hashPasswordService = hashPasswordService;
             _userStatsService = userStatsService;
             _taskItemRepository = taskItemRepository;
-           
+            _tasksParticipantsRepository = tasksParticipantsRepository;
+            _loginAttemptRepository = loginAttemptRepository;
+            _contextAccessor = contextAccessor;
         }
         public async Task<UserDto> GetUserById(int id)
         {
@@ -70,12 +76,99 @@ namespace TaskManagerApp.Services
             await _emailCodeService.SendVerificationCode(user.Email);
         }
 
-        public async Task<UserDto> LogInUser(LoginUserDto loginUserDto)
+        public async Task LogInUser(LoginUserDto loginUserDto, string? ipAddress)
         {
+            LoginAttempt loginAttempt = await _loginAttemptRepository.GetByIpAddressAsync(ipAddress);
+            if (loginAttempt == null)
+            {
+                loginAttempt = new LoginAttempt
+                {
+                    IpAddress = ipAddress,
+                    FailedAttempts = 0,
+                    BlockedUntil = default,
+                    LastAttempt = null
+                };
+                await _loginAttemptRepository.AddAsync(loginAttempt);
+
+            }
+            else
+            {
+                if (loginAttempt.BlockedUntil != default && loginAttempt.BlockedUntil > DateTime.UtcNow)
+                {
+                    var minutesRemaining = Math.Ceiling(
+                        (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                    throw new TooManyFailedLoginAttemptsException(minutesRemaining);
+                }
+                if (loginAttempt.BlockedUntil != default && loginAttempt.BlockedUntil <= DateTime.UtcNow)
+                {
+                    loginAttempt.FailedAttempts = 0;
+                    loginAttempt.BlockedUntil = default;
+                    loginAttempt.LastAttempt = null;
+                    await _loginAttemptRepository.UpdateAsync(loginAttempt);
+                }
+            }
+
             var testUser = await _userRepository.GetByEmailAsync(loginUserDto.Email);
             if (testUser == null)
             {
+                loginAttempt.FailedAttempts++;
+                loginAttempt.LastAttempt = DateTime.UtcNow;
+
+                if (loginAttempt.FailedAttempts >= 5)
+                {
+                    loginAttempt.BlockedUntil = DateTime.UtcNow.AddMinutes(15);
+                }
+
+                await _loginAttemptRepository.UpdateAsync(loginAttempt);
+
+                if (loginAttempt.BlockedUntil != null)
+                {
+                    var minutesRemaining = Math.Ceiling(
+                       (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                    throw new TooManyFailedLoginAttemptsException(minutesRemaining);
+                }
+
                 throw new EmailorPasswordNotFoundException();
+            }
+            else
+            {
+                var isPasswordValid = _hashPasswordService.VerifyPassword(loginUserDto.Password, testUser.PasswordHash);
+
+                if (isPasswordValid == false)
+                {
+                    loginAttempt.FailedAttempts++;
+                    loginAttempt.LastAttempt = DateTime.UtcNow;
+
+                    if (loginAttempt.FailedAttempts >= 5)
+                    {
+                        loginAttempt.BlockedUntil = DateTime.UtcNow.AddMinutes(15);
+                    }
+
+                    await _loginAttemptRepository.UpdateAsync(loginAttempt);
+
+                    if (loginAttempt.BlockedUntil != null)
+                    {
+                        var minutesRemaining = Math.Ceiling(
+                       (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                        throw new TooManyFailedLoginAttemptsException(minutesRemaining);
+                    }
+
+                    throw new EmailorPasswordNotFoundException();
+                }
+            }
+
+            if (loginAttempt.FailedAttempts >= 5)
+            {
+                loginAttempt.BlockedUntil = DateTime.UtcNow.AddMinutes(15);
+                loginAttempt.LastAttempt = DateTime.UtcNow;
+                await _loginAttemptRepository.UpdateAsync(loginAttempt);
+                var minutesRemaining = Math.Ceiling(
+                       (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                throw new TooManyFailedLoginAttemptsException(minutesRemaining);
             }
 
             if (testUser.IsEmailVerified == false)
@@ -83,20 +176,28 @@ namespace TaskManagerApp.Services
                 throw new EmailNotVerifiedException();
             }
 
-            var isPasswordValid = _hashPasswordService.VerifyPassword(loginUserDto.Password, testUser.PasswordHash);
+            await _emailCodeService.SendVerificationCode(testUser.Email);
 
-            if (isPasswordValid == false)
+            loginAttempt.FailedAttempts = 0;
+            loginAttempt.LastAttempt = null;
+            loginAttempt.BlockedUntil = default;
+            await _loginAttemptRepository.UpdateAsync(loginAttempt);
+        }
+
+        public async Task<UserDto> UseTheSendCodeForLogin(VerifyEmailDto verifyEmailDto)
+        {
+            var user = await _userRepository.GetByEmailAsync(verifyEmailDto.Email);
+            if (user == null)
             {
                 throw new EmailorPasswordNotFoundException();
             }
-            await _emailCodeService.SendVerificationCode(testUser.Email);
-            var isVerified = await _emailCodeService.VerifyEmail(testUser.Email, loginUserDto.Code);
+            var isVerified = await _emailCodeService.VerifyEmail(verifyEmailDto.Email, verifyEmailDto.Code);
             if (!isVerified)
             {
                 throw new InvalidVerificationCodeException();
             }
-
-            return testUser.ToDto();
+            //SEND TOKEN TO THE USER FOR AUTHENTICATION
+            return user.ToDto();
         }
 
         public async Task DeleteAccount(int userId)
@@ -136,7 +237,7 @@ namespace TaskManagerApp.Services
             var newRank = await _rankRepository.GetRankForPoints(user.Points);
             if (newRank == null)
             {
-                throw new Exception("No rank found for the given points.");
+                throw new RankNotFoundException();
             }
             user.RankId = newRank.Id;
         }
@@ -169,7 +270,7 @@ namespace TaskManagerApp.Services
             {
                 throw new UserNotFoundException(initiatorId);
             }
-            initiator.ToDto();
+            var initiatorDto = initiator.ToDto();
 
 
 
@@ -178,12 +279,12 @@ namespace TaskManagerApp.Services
             {
                 throw new UserNotFoundException(relatedUserId);
             }
-            relatedUser.ToDto();
-            if (initiator == relatedUser)
+            var relatedUserDto = relatedUser.ToDto();
+            if (initiatorDto == relatedUserDto)
             {
                 throw new InvalidFriendRequestException();
             }
-            UsersRelations usersRelations = await _userRepository.GetUserRelationAsync(initiator.Id, relatedUser.Id);
+            UsersRelations usersRelations = await _userRepository.GetUserRelationAsync(initiatorDto.Id, relatedUserDto.Id);
             if (usersRelations != null)
             {
                 if (usersRelations.RelationStatus == RelationStatus.Blocked)
@@ -202,7 +303,7 @@ namespace TaskManagerApp.Services
             }
 
             int permitedIvitesForToday = 20;
-            List<UsersRelations> initiatorInvitesForToday = await _userRepository.GetUserInvitesTodayAsync(initiator.Id);
+            List<UsersRelations> initiatorInvitesForToday = await _userRepository.GetUserInvitesTodayAsync(initiatorDto.Id);
 
             if (initiatorInvitesForToday.Count > permitedIvitesForToday)
             {
@@ -212,13 +313,14 @@ namespace TaskManagerApp.Services
             UsersRelations usersRelation = new UsersRelations
             {
                 Initiator = initiator,
-                InitiatorId = initiator.Id,
-                RelatedUserId = relatedUser.Id,
+                InitiatorId = initiatorDto.Id,
+                RelatedUserId = relatedUserDto.Id,
                 RelatedUser = relatedUser,
 
             };
             await _userRepository.SendRequestAsync(usersRelation);
             //SEND EMAIL TO THE RELATED USER!
+            await _emailCodeService.SendFriendRequestToTheRelatedUserEmail(initiatorDto, relatedUserDto);
 
         }
 
@@ -288,6 +390,7 @@ namespace TaskManagerApp.Services
                         userRelation.TimeOfAction = DateTime.UtcNow;
                     }
                     await _userRepository.RespondToRequestAsync(userRelation);
+                    await _emailCodeService.AnswerFriendRequestInformInitiatorEmail(userRelation.ToDto());
                     break;
                     
                 }
@@ -315,6 +418,11 @@ namespace TaskManagerApp.Services
                 throw new RelationNotFoundException();
             }
 
+            if (relationType == usersRelation.RelationType)
+            {
+                throw new RelationAlreadyExistsException();
+            }
+
             if (usersRelation.RelationType == RelationType.Friend)
             {
                 if (relationType == RelationType.Blocked)
@@ -336,6 +444,10 @@ namespace TaskManagerApp.Services
                     //SEND EMAIL THAT YOU HAVE BEEN UNBLOCKED
                     usersRelation.RelationType = relationType;
                 }
+                if (relationType == RelationType.Unfriend)
+                {
+                    usersRelation.RelationType = relationType;
+                }
                
             }
             if (usersRelation.RelationType == RelationType.Unfriend)
@@ -353,8 +465,29 @@ namespace TaskManagerApp.Services
             }
             //DOES THE SAME JOB AS AN UPDATE METHOD.
             await _userRepository.RespondToRequestAsync(usersRelation);
-           
+            await _emailCodeService.UpdateRelationShipStatusInformBothEmail(relatedUser.Email, user.Username, relatedUser.Username, relationType);
+            await _emailCodeService.UpdateRelationShipStatusInformBothEmail(user.Email, relatedUser.Username, user.Username, relationType);
 
+
+        }
+
+        public async Task<List<TaskDto>> GetAllFinishedTasksByUserId(int userId)
+        {
+            User user = await _userRepository.GetAsync(userId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(userId);
+            }
+            List<TaskItem> finishedTasks = await _taskItemRepository.GetAllFinishedTasksByUserId(user.Id);
+            List<TaskItem> finishedSharedTasks = await _tasksParticipantsRepository.GetAllFinishedSharedTasksByUserId(user.Id);
+            finishedTasks.AddRange(finishedSharedTasks);
+            List<TaskDto> finishedTasksDto = new List<TaskDto>();
+            foreach (TaskItem taskItem in finishedTasks)
+            {
+                finishedTasksDto.Add(taskItem.ToDto());
+            }
+
+            return finishedTasksDto;
         }
 
         public async Task DeleteUserRelationByMoreThanAMonth()

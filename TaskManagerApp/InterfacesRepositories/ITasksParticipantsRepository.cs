@@ -12,6 +12,7 @@ namespace TaskManagerApp.InterfacesRepositories
         public Task Add(TasksParticipants tasksParticipants);
         public Task DeleteByBoth(int taskId, int userId);
         public Task<List<TasksParticipants>> GetJoinedInTaskByTaskId(int taskId);
+        public Task<List<TaskItem>> GetAllFinishedSharedTasksByUserId(int userId);
 
 
     }

@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 
@@ -17,7 +18,7 @@ namespace TaskManagerApp.Services
             var ranks = await _repository.GetAllAsync();
             if (ranks == null || ranks.Count ==0)
             {
-                throw new Exception("There are no ranks.");
+                throw new RankNotFoundException();
             }
             return ranks;
         }
@@ -27,7 +28,7 @@ namespace TaskManagerApp.Services
             var existingRank = await _repository.GetAsync(rankId);
             if (existingRank == null)
             {
-                throw new Exception($"Rank with ID {rankId} was not found.");
+                throw new RankNotFoundException();
             }
 
             return existingRank;

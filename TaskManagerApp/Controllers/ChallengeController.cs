@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TaskManagerApp.DTOS;
 using TaskManagerApp.InterfacesServices;
 
 namespace TaskManagerApp.Controllers
@@ -17,7 +18,20 @@ namespace TaskManagerApp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _challengeService.ShowAllAsync());
+            List<ChallengeDto> challenges = await _challengeService.ShowAllAsync();
+            if (challenges == null || !challenges.Any())
+            {
+                return NotFound("No challenges found.");
+            }
+            if (challenges.Any())
+            {
+                return Ok(await _challengeService.ShowAllAsync());
+            }
+            else
+            {
+                return BadRequest();
+            }
+           
         }
 
         [HttpGet("{id}")]
@@ -48,6 +62,12 @@ namespace TaskManagerApp.Controllers
         public async Task<IActionResult> GetCompletedByUser(int userId)
         {
             return Ok(await _challengeService.ShowAllCompletedByUserAsync(userId));
+        }
+
+        [HttpGet("GetAllActive")]
+        public async Task<IActionResult> GetAllActive()
+        {
+            return Ok(await _challengeService.GetAllActive());
         }
 
         [HttpPost("{challengeId}/join/{userId}")]

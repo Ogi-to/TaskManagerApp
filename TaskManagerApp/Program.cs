@@ -1,4 +1,10 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+
+using System.Text;
 using TaskManagerApp.Data;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesRepositories;
@@ -18,6 +24,31 @@ namespace TaskManagerApp
             builder.Services.AddDbContext<TaskManagerDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            //}).AddJwtBearer(options =>
+            //{
+            //    options.RequireHttpsMetadata = false;
+            //    options.SaveToken = true;
+            //    options.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            //        ValidAudience = builder.Configuration["Jwt:Audience"],
+            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            //        ValidateIssuer = true,
+            //        ValidateAudience = true,
+            //        ValidateLifetime = true,
+            //        ValidateIssuerSigningKey = true
+            //    };
+            //});
+
+            builder.Services.AddAuthorization();
+
+            builder.Services.AddHttpContextAccessor();
+
             // Controllers
             builder.Services.AddControllers();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -29,6 +60,7 @@ namespace TaskManagerApp
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<IEmailCodeRepository, EmailCodeRepository>();
             builder.Services.AddScoped<ITasksParticipantsRepository, TasksParticipantsRepository>();
+            builder.Services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
 
 
             builder.Services.AddScoped<IUserService, UserService>();
@@ -41,12 +73,29 @@ namespace TaskManagerApp
             builder.Services.AddScoped<IRankService, RankService>();
             builder.Services.AddScoped<IUserStatsService, UserStatsService>();
             builder.Services.AddScoped<ITasksParticipantsService, TasksParticipantsService>();
+            builder.Services.AddScoped<JwtService>();
 
             builder.Services.AddHostedService<AppBackgroundService>();
 
             // Swagger
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            //{
+            //    var jwtSecurityScheme = new OpenApiSecurityScheme
+            //    {
+            //        BearerFormat = "JWT",
+            //        Name = "Authorization",
+            //        In = ParameterLocation.Header,
+            //        Type = SecuritySchemeType.Http,
+            //        Scheme = JwtBearerDefaults.AuthenticationScheme,
+            //        Description = "Enter JWT access token",
+            //        Reference = new OpenApiReference
+            //        {
+            //            Id = JwtBearerDefaults.AuthenticationScheme,
+            //            Type = ReferenceType.SecurityScheme
+            //        }
+            //    };
+            //});
 
             // CORS
             builder.Services.AddCors(options =>
@@ -72,7 +121,8 @@ namespace TaskManagerApp
 
             app.UseExceptionMiddleware();
 
-            app.UseAuthorization();
+
+            app.UseAuthentication();
 
             app.UseCors("AllowAll");
 

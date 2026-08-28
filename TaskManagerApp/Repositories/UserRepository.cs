@@ -50,20 +50,26 @@ namespace TaskManagerApp.Repositories
                 .ToListAsync();
 
             var relations = await _context.UsersRelations
-                .Where(r => r.InitiatorId == id)
+                .Where(r => r.InitiatorId == id || r.RelatedUserId == id)
                 .ToListAsync();
 
             var challenges = await _context.UsersChallenges
                 .Where(uc => uc.UserId == id)
                 .ToListAsync();
 
+            var taskParticipants = await _context.TasksParticipants
+                .Where(tp => tp.UserId == id)
+                .ToListAsync();
+
             var stats = await _context.UserStats
                 .FirstOrDefaultAsync(s => s.UserId == id);
 
+            _context.TasksParticipants.RemoveRange(taskParticipants);
             _context.TasksCategories.RemoveRange(taskCategories);
             _context.TaskItems.RemoveRange(userTasks);
             _context.UsersRelations.RemoveRange(relations);
             _context.UsersChallenges.RemoveRange(challenges);
+            
 
             if (stats != null)
                 _context.UserStats.Remove(stats);
