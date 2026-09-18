@@ -14,6 +14,7 @@ namespace TaskManagerApp.InterfacesServices
 
         public Task JoinChallengeAsync(int challengeId, int userId);
         public Task CompleteChallengeAsync(int challengeId, int userId);
+        public Task<List<ChallengeDto>> GetAllActive();
         public Task RemoveChallengesActivity();
         public Task ChooseRandomChallenges();
     }

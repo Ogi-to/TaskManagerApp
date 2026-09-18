@@ -23,9 +23,11 @@ namespace TaskManagerApp.Repositories
         public async Task DeleteAsync(int itemId)
         {
             var item = await _context.TaskItems.FindAsync(itemId);
+            List<TasksParticipants> tasksParticipants = await _context.TasksParticipants.Where(tp => tp.TaskId == itemId).ToListAsync();
             // the delete behaviour in "on model creating" is restrict, so the relationships have to be updated manually
             _context.TasksCategories.RemoveRange(item.TasksCategories);
             _context.TaskItems.Remove(item);
+            _context.TasksParticipants.RemoveRange(tasksParticipants);
             await _context.SaveChangesAsync();
         }
 
@@ -34,18 +36,25 @@ namespace TaskManagerApp.Repositories
             return await _context.TaskItems
                    .Include(t => t.TasksCategories)
                        .ThenInclude(tc => tc.Category)
+                    .Include(u => u.User)
                    .FirstOrDefaultAsync(t => t.Id == id);
         }
-
-        //public async Task<List<TaskItem>> GetAllAsync()
-        //{
-        //    return await _context.TaskItems.Include(t => t.State).Include(t => t.Categories).Include(t => t.Users).OrderBy(t => t.EndDate).ToListAsync();
-        //}
         public async Task<List<TaskItem>> GetAllByUserAsync(int userId)
         {
-
+        
                 return await _context.TaskItems
-           .Where(t => t.UserId == userId).ToListAsync();
+           .Where(t => t.UserId == userId).Include(tp => tp.TaskParticipants).Where(tp => tp.UserId == userId).ToListAsync();
+        }
+
+        public async Task<List<TaskItem>> GetAllAboutToStartAsync()
+        {
+            var now = DateTime.UtcNow;
+
+            var tasks = await _context.TaskItems
+            .Include(t => t.User).Where(t => t.State == StateType.NotStarted).Where(t => t.User.ReminderStartBefore > 0)
+            .Where(t => t.StartDate <= now.AddMinutes(t.User.ReminderStartBefore))
+            .ToListAsync();
+            return tasks;
         }
 
         public async Task<List<TaskItem>> GetAllAsync()
@@ -56,6 +65,12 @@ namespace TaskManagerApp.Repositories
            .ToListAsync();
         }
 
+        public async Task<List<TaskItem>> GetAllFinishedTasksByUserId(int userId)
+        {
+            return await _context.TaskItems
+                .Where(t => t.UserId == userId && t.State == StateType.Completed)
+                .ToListAsync();
+        }
 
         public async Task UpdateAsync(TaskItem item)
         {
@@ -93,13 +108,29 @@ namespace TaskManagerApp.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task SaveChanges()
+        {
+            await _context.SaveChangesAsync();
+        }
+
         public async Task CompleteTask(int taskId)
         {
             var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
             task.State = StateType.Completed;
+            task.CompletedAt = DateTime.UtcNow;
 
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<TaskItem>> GetCompletedTasksTodayByUser(int userId)
+        {
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+            List<TaskItem> taskItems = await _context.TaskItems.Where(t => t.UserId == userId && t.State == StateType.Completed
+            && t.CompletedAt >= today && t.CompletedAt < tomorrow).ToListAsync();
+            return taskItems;
+
         }
 
         public async Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow)
@@ -113,8 +144,15 @@ namespace TaskManagerApp.Repositories
 
         public async Task DeleteOverdueTaskMoreThanDay(DateTime utcNow)
         {
-            var overdueTasks = await _context.TaskItems.Where(t => t.State == StateType.Overdue && t.EndDate < utcNow.AddDays(-1))
+            var overdueTasksIds = await _context.TaskItems.Where(t => t.State == StateType.Overdue && t.EndDate < utcNow.AddDays(-1)).Select(t => t.Id)
                 .ToListAsync();
+
+            var taskCategories = await _context.TasksCategories
+                .Where(tc => overdueTasksIds.Contains(tc.TaskId)).ToListAsync();
+
+            _context.TasksCategories.RemoveRange(taskCategories);
+
+            var overdueTasks = await _context.TaskItems.Where(ot => overdueTasksIds.Contains(ot.Id)).ToListAsync();
             _context.TaskItems.RemoveRange(overdueTasks);
             await _context.SaveChangesAsync();
         }

@@ -17,9 +17,13 @@ namespace TaskManagerApp.Interfaces
         public Task<List<TaskItem>> GetAllAsync();
         public Task<List<TaskItem>> GetAllByUserAsync(int userId);
 
+        public Task<List<TaskItem>> GetAllAboutToStartAsync();
+        public Task SaveChanges();
+        public Task<List<TaskItem>> GetCompletedTasksTodayByUser(int userId);
         public Task CompleteTask(int taskId);
 
         public Task<List<TaskItem>> GetTasksPastDueAsync(DateTime utcNow);
+        public Task<List<TaskItem>> GetAllFinishedTasksByUserId(int userId);
         public Task DeleteOverdueTaskMoreThanDay(DateTime utcNow);
     }
 }

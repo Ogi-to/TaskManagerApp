@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using TaskManagerApp.InterfacesServices;
 
@@ -17,7 +18,7 @@ namespace TaskManagerApp.Services
             var states = await _repository.GetAllAsync();
             if (states == null || states.Count == 0)
             {
-                throw new Exception("There are no states.");
+                throw new StateNotFoundException;
             }
             return states;
         }
@@ -27,7 +28,7 @@ namespace TaskManagerApp.Services
             var existingState = await _repository.GetAsync(stateId);
             if (existingState == null)
             {
-                throw new Exception($"State with ID {stateId} was not found.");
+                throw new StateNotFoundException();
             }
 
             return existingState;

@@ -22,6 +22,10 @@ namespace TaskManagerApp.Data.Models
         public DateTime? EndDate { get; set; }
         public StateType State { get; set; }
 
+        public DateTime? CompletedAt { get; set; } = null;
+
+        public DateTime? LastSendReminder { get; set; } = null;
+
         // Foreign key
         public int UserId { get; set; }
 
@@ -29,6 +33,8 @@ namespace TaskManagerApp.Data.Models
         public User User { get; set; }
 
         public List<TasksCategories> TasksCategories { get; set; } = new List<TasksCategories>();
+
+        public List<TasksParticipants> TaskParticipants { get; set; } = new List<TasksParticipants>();
 
     }
 }

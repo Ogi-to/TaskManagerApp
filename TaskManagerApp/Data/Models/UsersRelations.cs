@@ -17,16 +17,18 @@ namespace TaskManagerApp.Data.Models
         [ForeignKey(nameof(RelatedUserId))]
         public User RelatedUser { get; set; }
 
-        public RelationType RelationType { get; set; }
+        public RelationType? RelationType { get; set; }
 
         public RelationStatus RelationStatus { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? TimeOfAction {  get; set; } 
     }
 
     public enum RelationType
     {
         Friend,
+        Unfriend,
         Blocked
     }
 
@@ -34,7 +36,8 @@ namespace TaskManagerApp.Data.Models
     {
         Pending,
         Accepted,
-        Rejected
+        Rejected,
+        Blocked
     }
 }
 

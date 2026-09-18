@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DtoMappers;
 using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
@@ -12,42 +13,36 @@ namespace TaskManagerApp.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IRankRepository _rankRepository;
-        private readonly IEmailCodeRepository _emailCodeRepository;
-        private readonly IEmailCodeService _emailCodeService;
+        private readonly IEmailService _emailCodeService;
         private readonly HashPasswordService _hashPasswordService;
         private readonly IUserStatsService _userStatsService;
+        private readonly ITaskItemRepository _taskItemRepository;
+        private readonly ITasksParticipantsRepository _tasksParticipantsRepository;
+        private readonly ILoginAttemptRepository _loginAttemptRepository;
+        private readonly IHttpContextAccessor _contextAccessor;
 
-        public UserService(IUserRepository userRepository, IRankRepository rankRepository, IEmailCodeRepository emailCodeRepository, 
-            IEmailCodeService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService)
+        public UserService(IUserRepository userRepository, IRankRepository rankRepository, ITaskItemRepository taskItemRepository,
+            IEmailService emailCodeService, HashPasswordService hashPasswordService, IUserStatsService userStatsService,
+            ITasksParticipantsRepository tasksParticipantsRepository, ILoginAttemptRepository loginAttemptRepository, IHttpContextAccessor contextAccessor)
         {
             _userRepository = userRepository;
             _rankRepository = rankRepository;
-            _emailCodeRepository = emailCodeRepository;
             _emailCodeService = emailCodeService;
             _hashPasswordService = hashPasswordService;
             _userStatsService = userStatsService;
+            _taskItemRepository = taskItemRepository;
+            _tasksParticipantsRepository = tasksParticipantsRepository;
+            _loginAttemptRepository = loginAttemptRepository;
+            _contextAccessor = contextAccessor;
         }
         public async Task<UserDto> GetUserById(int id)
         {
             var user = await _userRepository.GetAsync(id);
 
             if (user == null)
-            {
                 throw new UserNotFoundException(id);
-            }
 
-            return new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                Streak = user.Streak,
-                Points = user.Points,
-                RankId = user.RankId,
-                CreatedAt = user.CreatedAt,
-                LastActive = user.LastActive,
-                UserCode = user.UserCode
-            };
+            return user.ToDto();
 
         }
 
@@ -81,12 +76,99 @@ namespace TaskManagerApp.Services
             await _emailCodeService.SendVerificationCode(user.Email);
         }
 
-        public async Task<UserDto> LogInUser(LoginUserDto loginUserDto)
+        public async Task LogInUser(LoginUserDto loginUserDto, string? ipAddress)
         {
+            LoginAttempt loginAttempt = await _loginAttemptRepository.GetByIpAddressAsync(ipAddress);
+            if (loginAttempt == null)
+            {
+                loginAttempt = new LoginAttempt
+                {
+                    IpAddress = ipAddress,
+                    FailedAttempts = 0,
+                    BlockedUntil = default,
+                    LastAttempt = null
+                };
+                await _loginAttemptRepository.AddAsync(loginAttempt);
+
+            }
+            else
+            {
+                if (loginAttempt.BlockedUntil != default && loginAttempt.BlockedUntil > DateTime.UtcNow)
+                {
+                    var minutesRemaining = Math.Ceiling(
+                        (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                    throw new TooManyFailedLoginAttemptsException(minutesRemaining);
+                }
+                if (loginAttempt.BlockedUntil != default && loginAttempt.BlockedUntil <= DateTime.UtcNow)
+                {
+                    loginAttempt.FailedAttempts = 0;
+                    loginAttempt.BlockedUntil = default;
+                    loginAttempt.LastAttempt = null;
+                    await _loginAttemptRepository.UpdateAsync(loginAttempt);
+                }
+            }
+
             var testUser = await _userRepository.GetByEmailAsync(loginUserDto.Email);
             if (testUser == null)
             {
+                loginAttempt.FailedAttempts++;
+                loginAttempt.LastAttempt = DateTime.UtcNow;
+
+                if (loginAttempt.FailedAttempts >= 5)
+                {
+                    loginAttempt.BlockedUntil = DateTime.UtcNow.AddMinutes(15);
+                }
+
+                await _loginAttemptRepository.UpdateAsync(loginAttempt);
+
+                if (loginAttempt.BlockedUntil != null)
+                {
+                    var minutesRemaining = Math.Ceiling(
+                       (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                    throw new TooManyFailedLoginAttemptsException(minutesRemaining);
+                }
+
                 throw new EmailorPasswordNotFoundException();
+            }
+            else
+            {
+                var isPasswordValid = _hashPasswordService.VerifyPassword(loginUserDto.Password, testUser.PasswordHash);
+
+                if (isPasswordValid == false)
+                {
+                    loginAttempt.FailedAttempts++;
+                    loginAttempt.LastAttempt = DateTime.UtcNow;
+
+                    if (loginAttempt.FailedAttempts >= 5)
+                    {
+                        loginAttempt.BlockedUntil = DateTime.UtcNow.AddMinutes(15);
+                    }
+
+                    await _loginAttemptRepository.UpdateAsync(loginAttempt);
+
+                    if (loginAttempt.BlockedUntil != null)
+                    {
+                        var minutesRemaining = Math.Ceiling(
+                       (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                        throw new TooManyFailedLoginAttemptsException(minutesRemaining);
+                    }
+
+                    throw new EmailorPasswordNotFoundException();
+                }
+            }
+
+            if (loginAttempt.FailedAttempts >= 5)
+            {
+                loginAttempt.BlockedUntil = DateTime.UtcNow.AddMinutes(15);
+                loginAttempt.LastAttempt = DateTime.UtcNow;
+                await _loginAttemptRepository.UpdateAsync(loginAttempt);
+                var minutesRemaining = Math.Ceiling(
+                       (loginAttempt.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+
+                throw new TooManyFailedLoginAttemptsException(minutesRemaining);
             }
 
             if (testUser.IsEmailVerified == false)
@@ -94,25 +176,28 @@ namespace TaskManagerApp.Services
                 throw new EmailNotVerifiedException();
             }
 
-            var isPasswordValid = _hashPasswordService.VerifyPassword(loginUserDto.Password, testUser.PasswordHash);
+            await _emailCodeService.SendVerificationCode(testUser.Email);
 
-            if (isPasswordValid == false)
+            loginAttempt.FailedAttempts = 0;
+            loginAttempt.LastAttempt = null;
+            loginAttempt.BlockedUntil = default;
+            await _loginAttemptRepository.UpdateAsync(loginAttempt);
+        }
+
+        public async Task<UserDto> UseTheSendCodeForLogin(VerifyEmailDto verifyEmailDto)
+        {
+            var user = await _userRepository.GetByEmailAsync(verifyEmailDto.Email);
+            if (user == null)
             {
                 throw new EmailorPasswordNotFoundException();
             }
-
-            return new UserDto
+            var isVerified = await _emailCodeService.VerifyEmail(verifyEmailDto.Email, verifyEmailDto.Code);
+            if (!isVerified)
             {
-                Id = testUser.Id,
-                Username = testUser.Username,
-                Email = testUser.Email,
-                Streak = testUser.Streak,
-                Points = testUser.Points,
-                RankId = testUser.RankId,
-                CreatedAt = testUser.CreatedAt,
-                LastActive = testUser.LastActive,
-                UserCode = testUser.UserCode
-            };
+                throw new InvalidVerificationCodeException();
+            }
+            //SEND TOKEN TO THE USER FOR AUTHENTICATION
+            return user.ToDto();
         }
 
         public async Task DeleteAccount(int userId)
@@ -125,7 +210,7 @@ namespace TaskManagerApp.Services
             await _userRepository.DeleteAccountAsync(user.Id);
         }
 
-        public async Task UpdateStreak(User user)
+        public async Task UpdateStreak(UpdateUserDto user)
         {
           
             var today = DateTime.UtcNow.Date;
@@ -146,30 +231,307 @@ namespace TaskManagerApp.Services
             user.LastActive = DateTime.UtcNow;
         }
 
-        public async Task UpdateRank(User user)
+        public async Task UpdateRank(UpdateUserDto user)
         {
             
             var newRank = await _rankRepository.GetRankForPoints(user.Points);
             if (newRank == null)
             {
-                throw new Exception("No rank found for the given points.");
+                throw new RankNotFoundException();
             }
             user.RankId = newRank.Id;
         }
 
         public async Task UpdatePoints(int userId, int points)
         {
-            var user = await _userRepository.GetAsync(userId);
+            User user = await _userRepository.GetAsync(userId);
             if (user == null)
             {
                 throw new UserNotFoundException(userId);
             }
             user.Points += points;
+            UpdateUserDto updateUserDto = new UpdateUserDto
+            {
+                Points = user.Points,
+                RankId = user.RankId,
+                LastActive = user.LastActive,
+                Streak = user.Streak
+            };
+
+            await UpdateRank(updateUserDto);
+            await UpdateStreak(updateUserDto);
+            await _userRepository.UpdateUserInfoAsync(updateUserDto, user.Id);
+        }
+
+        public async Task SendFriendRequest(int initiatorId, int relatedUserId)
+        {
+            User initiator = await _userRepository.GetAsync(initiatorId);
+            if (initiator == null)
+            {
+                throw new UserNotFoundException(initiatorId);
+            }
+            var initiatorDto = initiator.ToDto();
 
 
-            await UpdateRank(user);
-            await UpdateStreak(user);
-            await _userRepository.UpdateUserInfoAsync(user);
+
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            var relatedUserDto = relatedUser.ToDto();
+            if (initiatorDto == relatedUserDto)
+            {
+                throw new InvalidFriendRequestException();
+            }
+            UsersRelations usersRelations = await _userRepository.GetUserRelationAsync(initiatorDto.Id, relatedUserDto.Id);
+            if (usersRelations != null)
+            {
+                if (usersRelations.RelationStatus == RelationStatus.Blocked)
+                {
+                    throw new TheUserHasBlockedYouException();
+                }
+                if (usersRelations.RelationStatus == RelationStatus.Pending)
+                {
+                    throw new InviteIsStillPendingException();
+                }
+                if (usersRelations.RelationStatus == RelationStatus.Accepted)
+                {
+                    throw new YouAreAlreadyFriendsException();
+                }
+
+            }
+
+            int permitedIvitesForToday = 20;
+            List<UsersRelations> initiatorInvitesForToday = await _userRepository.GetUserInvitesTodayAsync(initiatorDto.Id);
+
+            if (initiatorInvitesForToday.Count > permitedIvitesForToday)
+            {
+                throw new ExceededNumberOfInvitesForOneDayException(permitedIvitesForToday);
+            }
+
+            UsersRelations usersRelation = new UsersRelations
+            {
+                Initiator = initiator,
+                InitiatorId = initiatorDto.Id,
+                RelatedUserId = relatedUserDto.Id,
+                RelatedUser = relatedUser,
+
+            };
+            await _userRepository.SendRequestAsync(usersRelation);
+            //SEND EMAIL TO THE RELATED USER!
+            await _emailCodeService.SendFriendRequestToTheRelatedUserEmail(initiatorDto, relatedUserDto);
+
+        }
+
+        public async Task<List<UsersRelationsDto>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId)
+        {
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            List<UsersRelations> userRelations = await _userRepository.GetUnansweredRelationReceivedByUserIdAsync(relatedUserId);
+            List<UsersRelationsDto> usersRelationsDtos = new List<UsersRelationsDto>();
+            foreach (var userRelation in userRelations)
+            {
+                UsersRelationsDto userRelationsDto = new UsersRelationsDto
+                {
+                    Initiator = userRelation.Initiator.ToDto(),
+                    RelatedUser = userRelation.RelatedUser.ToDto(),
+                    RelationStatus = userRelation.RelationStatus,
+                    RelationType = userRelation.RelationType,
+                    CreatedAt = userRelation.CreatedAt,
+                    TimeOfAction = userRelation.TimeOfAction,
+                };
+                usersRelationsDtos.Add(userRelationsDto);
+                
+            }
+
+             return usersRelationsDtos;
+
+        }
+
+        public async Task AnswerToSentRequest(int relatedUserId, int userInitiatorId, RelationStatus relationStatus)
+        {
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            List<UsersRelations> pendingRequests = await _userRepository.GetUnansweredRelationReceivedByUserIdAsync(relatedUserId);
+
+            User userInitiator = await _userRepository.GetAsync(userInitiatorId);
+            if (userInitiator == null)
+            {
+                throw new UserNotFoundException(userInitiatorId);
+            }
+            foreach (UsersRelations userRelation in pendingRequests)
+            {
+                if (userRelation.InitiatorId == userInitiator.Id)
+                {
+                    //SEND EMAIL TO INFORM THE INITIATOR
+                    if (relationStatus == RelationStatus.Accepted)
+                    {
+                        userRelation.RelationStatus = relationStatus;
+                        userRelation.RelationType = RelationType.Friend;
+                        userRelation.TimeOfAction = DateTime.UtcNow;
+                    }
+                    if (relationStatus == RelationStatus.Blocked)
+                    {
+                        userRelation.RelationStatus = relationStatus;
+                        userRelation.RelationType = RelationType.Blocked;
+                        userRelation.TimeOfAction = DateTime.UtcNow;
+                    }
+                    if (relationStatus == RelationStatus.Rejected)
+                    {
+                        userRelation.RelationStatus = relationStatus;
+                        userRelation.RelationType = null;
+                        userRelation.TimeOfAction = DateTime.UtcNow;
+                    }
+                    await _userRepository.RespondToRequestAsync(userRelation);
+                    await _emailCodeService.AnswerFriendRequestInformInitiatorEmail(userRelation.ToDto());
+                    break;
+                    
+                }
+            }
+           
+
+        }
+
+        public async Task UpdateUserRelation(int initiatorId, int relatedUserId, RelationType relationType)
+        {
+            User user = await _userRepository.GetAsync(initiatorId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(initiatorId);
+            }
+
+            User relatedUser = await _userRepository.GetAsync(relatedUserId);
+            if (relatedUser == null)
+            {
+                throw new UserNotFoundException(relatedUserId);
+            }
+            UsersRelations usersRelation = await _userRepository.GetUserRelationAsync(user.Id, relatedUser.Id);
+            if (usersRelation == null)
+            {
+                throw new RelationNotFoundException();
+            }
+
+            if (relationType == usersRelation.RelationType)
+            {
+                throw new RelationAlreadyExistsException();
+            }
+
+            if (usersRelation.RelationType == RelationType.Friend)
+            {
+                if (relationType == RelationType.Blocked)
+                {
+                    //SEND EMAIL THAT YOU HAVE BEEN BLOCKED
+                    usersRelation.RelationType = relationType;
+                }
+                if (relationType == RelationType.Unfriend)
+                {
+                    //SEND EMAIL THAT YOU ARE NO LONGER FRIENDS
+                    usersRelation.RelationType = relationType;
+                }
+
+            }
+            if (usersRelation.RelationType == RelationType.Blocked)
+            {
+                if (relationType == RelationType.Friend)
+                {
+                    //SEND EMAIL THAT YOU HAVE BEEN UNBLOCKED
+                    usersRelation.RelationType = relationType;
+                }
+                if (relationType == RelationType.Unfriend)
+                {
+                    usersRelation.RelationType = relationType;
+                }
+               
+            }
+            if (usersRelation.RelationType == RelationType.Unfriend)
+            {
+                if (relationType == RelationType.Blocked)
+                {
+                    //SEND EMAIL THAT YOU HAVE BEEN BLOCKED
+                    usersRelation.RelationType = relationType;
+                }
+                if (relationType == RelationType.Friend)
+                {
+                    //SEND EMAIL THAT YOU ARE FRIENDS
+                    usersRelation.RelationType = relationType;
+                }
+            }
+            //DOES THE SAME JOB AS AN UPDATE METHOD.
+            await _userRepository.RespondToRequestAsync(usersRelation);
+            await _emailCodeService.UpdateRelationShipStatusInformBothEmail(relatedUser.Email, user.Username, relatedUser.Username, relationType);
+            await _emailCodeService.UpdateRelationShipStatusInformBothEmail(user.Email, relatedUser.Username, user.Username, relationType);
+
+
+        }
+
+        public async Task<List<TaskDto>> GetAllFinishedTasksByUserId(int userId)
+        {
+            User user = await _userRepository.GetAsync(userId);
+            if (user == null)
+            {
+                throw new UserNotFoundException(userId);
+            }
+            List<TaskItem> finishedTasks = await _taskItemRepository.GetAllFinishedTasksByUserId(user.Id);
+            List<TaskItem> finishedSharedTasks = await _tasksParticipantsRepository.GetAllFinishedSharedTasksByUserId(user.Id);
+            finishedTasks.AddRange(finishedSharedTasks);
+            List<TaskDto> finishedTasksDto = new List<TaskDto>();
+            foreach (TaskItem taskItem in finishedTasks)
+            {
+                finishedTasksDto.Add(taskItem.ToDto());
+            }
+
+            return finishedTasksDto;
+        }
+
+        public async Task DeleteUserRelationByMoreThanAMonth()
+        {
+            await _userRepository.DeleteAllUnansweredUserRelationsByMoreThanAMonth();
+        }
+
+
+        public async Task UpdateReminderSettings(ReminderSettingsDto reminderSettingsDto)
+        {
+            var user = await _userRepository.GetAsync(reminderSettingsDto.Id);
+            if (user == null)
+            {
+                throw new UserNotFoundException(reminderSettingsDto.Id);
+            }
+            ReminderSettingsDto reminderSettings = new ReminderSettingsDto
+            {
+                Id = reminderSettingsDto.Id,
+                ReminderInterval = reminderSettingsDto.ReminderInterval,
+                ReminderStartBefore = reminderSettingsDto.ReminderStartBefore,
+            };
+
+            reminderSettings.ReminderStartBefore = reminderSettingsDto.ReminderStartBefore;
+            reminderSettings.ReminderInterval = reminderSettingsDto.ReminderInterval;
+            await _userRepository.UpdateUserReminders(reminderSettings, user.Id);
+        }
+
+        public async Task SendReminderForTasksEmail()
+        {
+            List<TaskItem> tasks = await _taskItemRepository.GetAllAboutToStartAsync();
+            Console.WriteLine(tasks.Count);
+            foreach (var task in tasks)
+            {
+
+                User user = task.User;
+                if (task.LastSendReminder == default || task.LastSendReminder.Value.AddMinutes(user.ReminderInterval) <= DateTime.UtcNow)
+                {
+                    await _emailCodeService.SendReminderTaskEmail(user.Username, user.Email, task);
+                    task.LastSendReminder = DateTime.UtcNow;
+                }
+            }
+            await _taskItemRepository.SaveChanges();
+
+
         }
 
 
@@ -186,7 +548,41 @@ namespace TaskManagerApp.Services
                 throw new EmailorPasswordNotFoundException();
             }
             user.IsEmailVerified = true;
-            await _userRepository.UpdateAccountInfoAsync(user);
+            UpdateAccountDto updateAccountDto = new UpdateAccountDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Password = user.PasswordHash,
+                IsEmailVerified = user.IsEmailVerified,
+            };
+            
+            await _userRepository.UpdateAccountInfoAsync(updateAccountDto, user.Id);
+        }
+
+        public async Task ReSendVerificationCode(string email)
+        {
+            User user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                throw new EmailorPasswordNotFoundException();
+            }
+            await _emailCodeService.SendVerificationCode(user.Email);
+        }
+
+        public async Task SendReminderForStreakEmail()
+        {
+            var today = DateTime.UtcNow.Date;
+            List<User> users = await _userRepository.GetUsersWithStreaksAboutToEndAsync();
+            foreach (var user in users)
+            {
+                if (user.LastActive > today.AddDays(-1))
+                {
+                    await _emailCodeService.SendReminderForStreakEmail(user);
+                }
+               
+            }
+
         }
     }
 }

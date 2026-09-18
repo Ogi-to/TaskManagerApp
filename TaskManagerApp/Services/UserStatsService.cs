@@ -26,7 +26,7 @@ namespace TaskManagerApp.Services
             var existingStats = await _repository.GetAsync(userId);
             if (existingStats != null)
             {
-                throw new Exception($"User stats for user with ID {userId} already exist.");
+                throw new UserStatsAlreadyExistException();
             }
             var userStats = new UserStats
             {

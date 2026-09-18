@@ -13,6 +13,7 @@ namespace TaskManagerApp.DTOS
         public DateTime StartDate { get; set; }
 
         public DateTime? EndDate { get; set; }
+        public DateTime? CompletedAt { get; set; }
 
         public StateType State { get; set; }
         public int UserId { get; set; }

@@ -2,6 +2,7 @@
 using TaskManagerApp.DTOS;
 using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
+using TaskManagerApp.InterfacesRepositories;
 using TaskManagerApp.InterfacesServices;
 using TaskManagerApp.Repositories;
 
@@ -14,13 +15,16 @@ namespace TaskManagerApp.Services
         private readonly IUserService _userService;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IUserStatsService _userStatsService;
-        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService, ICategoryRepository categoryRepository, IUserStatsService userStatsService)
+        private readonly ITasksParticipantsRepository _tasksParticipantsRepository; 
+        public TaskItemService(ITaskItemRepository repository, IUserRepository userRepository, IUserService userService,
+        ICategoryRepository categoryRepository, IUserStatsService userStatsService, ITasksParticipantsRepository tasksParticipantsRepository)
         {
             _taskItemRepository = repository;
             _userRepository = userRepository;
             _userService = userService;
             _categoryRepository = categoryRepository;
             _userStatsService = userStatsService;
+            _tasksParticipantsRepository = tasksParticipantsRepository;
         }
         public async Task AddTaskAsync(AddTaskDto task)
         {
@@ -52,7 +56,7 @@ namespace TaskManagerApp.Services
 
             if (categories.Count != task.CategoryIds.Count)
             {
-                throw new Exception("These categories do not exist.");
+                throw new CategoryNotFoundException();
             }
 
    
@@ -141,7 +145,7 @@ namespace TaskManagerApp.Services
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 State = task.State,
-                UserId = task.Id,
+                UserId = task.UserId,
                 Categories = task.TasksCategories
                     .Select(tc => tc.Category.Name)
                     .ToList()
@@ -215,25 +219,42 @@ namespace TaskManagerApp.Services
                 throw new TaskAlreadyOverdueException();
             }
 
+
             var existingUser = await _userRepository.GetAsync(existingTask.UserId);
             if (existingUser == null)
             {
                 throw new UserNotAssignedToTaskException();
             }
 
-            var taskPoints = 200; // Assuming each completed task gives 200 points
-            await _userService.UpdatePoints(existingUser.Id, taskPoints);
+            List<TasksParticipants> usersInTask = await _tasksParticipantsRepository.GetJoinedInTaskByTaskId(existingTask.Id);
+            foreach (var participant in usersInTask)
+            {
+                await RewardUserForCompletedTask(participant.UserId);
+            }
 
-            var userStats = await _userStatsService.ShowUserStatsByIdAsync(existingTask.UserId);
-            userStats.TasksCompleted += 1;
 
+            await RewardUserForCompletedTask(existingUser.Id);
 
-
-            await _userStatsService.UpdateUserStatsAsync(userStats);
 
             await _taskItemRepository.CompleteTask(existingTask.Id);
 
 
+        }
+
+        private async Task RewardUserForCompletedTask(int userId)
+        {
+            var completedToday =
+                await _taskItemRepository.GetCompletedTasksTodayByUser(userId);
+
+            if (completedToday.Count < 5)
+            {
+                await _userService.UpdatePoints(userId, 200);
+            }
+
+            var stats = await _userStatsService.ShowUserStatsByIdAsync(userId);
+            stats.TasksCompleted++;
+
+            await _userStatsService.UpdateUserStatsAsync(stats);
         }
 
         public async Task MarkOverdueTasksAsync()

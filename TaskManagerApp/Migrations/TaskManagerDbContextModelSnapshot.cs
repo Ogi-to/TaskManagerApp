@@ -111,6 +111,32 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("EmailCodes");
                 });
 
+            modelBuilder.Entity("TaskManagerApp.Data.Models.LoginAttempt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("BlockedUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastAttempt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LoginAttempts");
+                });
+
             modelBuilder.Entity("TaskManagerApp.Data.Models.Rank", b =>
                 {
                     b.Property<int>("Id")
@@ -182,11 +208,17 @@ namespace TaskManagerApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastSendReminder")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
@@ -225,6 +257,25 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("TasksCategories");
                 });
 
+            modelBuilder.Entity("TaskManagerApp.Data.Models.TasksParticipants", b =>
+                {
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("TaskId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TasksParticipants");
+                });
+
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -255,6 +306,12 @@ namespace TaskManagerApp.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("RankId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReminderInterval")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReminderStartBefore")
                         .HasColumnType("integer");
 
                     b.Property<int>("Streak")
@@ -328,11 +385,15 @@ namespace TaskManagerApp.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("RelationStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("RelationStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("RelationType")
-                        .HasColumnType("integer");
+                    b.Property<string>("RelationType")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TimeOfAction")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("InitiatorId", "RelatedUserId");
 
@@ -380,6 +441,25 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("TaskManagerApp.Data.Models.TasksParticipants", b =>
+                {
+                    b.HasOne("TaskManagerApp.Data.Models.TaskItem", "TaskItem")
+                        .WithMany("TaskParticipants")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TaskManagerApp.Data.Models.User", "User")
+                        .WithMany("TaskParticipants")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TaskItem");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>
@@ -454,6 +534,8 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
                 {
+                    b.Navigation("TaskParticipants");
+
                     b.Navigation("TasksCategories");
                 });
 
@@ -467,6 +549,8 @@ namespace TaskManagerApp.Migrations
                         .IsRequired();
 
                     b.Navigation("TaskItems");
+
+                    b.Navigation("TaskParticipants");
 
                     b.Navigation("UsersChallenges");
                 });

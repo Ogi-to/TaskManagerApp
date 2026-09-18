@@ -1,4 +1,5 @@
 ﻿using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
 
 namespace TaskManagerApp.Interfaces
 {
@@ -7,21 +8,26 @@ namespace TaskManagerApp.Interfaces
         public Task<User?> GetAsync(int id);
 
         public Task<List<User>> GetAllUsersAsync();
-        public Task<User?> GetByEmailAsync(string email);
-        public Task<User?> GetByUsernameAsync(string username);
-        public Task<User?> GetByUserCodeAsync(string userCode);
-        public Task<UsersRelations?> GetRelationAsync(int initiatorId, int relatedUserId);
+        public Task<User> GetByEmailAsync(string email);
+        public Task<User> GetByUsernameAsync(string username);
+        public Task<User> GetByUserCodeAsync(string userCode);
 
+        public Task<List<UsersRelations>> GetUserInvitesTodayAsync(int userId);
+        public Task<List<UsersRelations>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId);
+        public Task<UsersRelations> GetUserRelationAsync(int user1Id, int user2Id);
         public Task<User> CreateAccountAsync(User item);
         public Task DeleteAccountAsync(int id);
 
-        public Task UpdateAccountInfoAsync(User item);
+        public Task UpdateAccountInfoAsync(UpdateAccountDto item, int userId);
 
-        public Task UpdateUserInfoAsync(User item);
+        public Task UpdateUserInfoAsync(UpdateUserDto item, int id);
 
+        public Task UpdateUserReminders(ReminderSettingsDto reminderSettingsDto, int userId);
+        public Task DeleteAllUnansweredUserRelationsByMoreThanAMonth();
+        public Task<List<User>> GetUsersWithStreaksAboutToEndAsync();
         public Task SendRequestAsync(UsersRelations relation);
 
-        public Task<bool> RespondToRequestAsync(UsersRelations relation);
+        public Task RespondToRequestAsync(UsersRelations relation);
 
         public Task<List<User>> GetFriendsListAsync(User item);
 

@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskManagerApp.Data;
 using TaskManagerApp.Data.Models;
+using TaskManagerApp.DTOS;
+using TaskManagerApp.Exceptions;
 using TaskManagerApp.Interfaces;
 using static TaskManagerApp.Data.Models.State;
 
@@ -26,60 +28,118 @@ namespace TaskManagerApp.Repositories
 
         public async Task<List<User>> GetAllUsersAsync()
         {
-            return await _context.Users.OrderBy(u => u.Id).ToListAsync();
+            return await _context.Users.ToListAsync();
         }
 
         public async Task DeleteAccountAsync(int id)
         {
-            var userToDelete = await _context.Users.Where(u => u.Id == id).FirstOrDefaultAsync();
-            var userTasks = await _context.TaskItems.Where(t => t.UserId == id).ToListAsync();
-            var userRelations = await _context.UsersRelations.Where(r => r.InitiatorId == id).ToListAsync();
-            var userChalllenges = await _context.UsersChallenges.Where(uc => uc.UserId == id).ToListAsync();
-            var userStats = await _context.UserStats.Where(s => s.UserId == id).FirstOrDefaultAsync();
-            _context.TaskItems.RemoveRange(userTasks);
-            _context.UsersRelations.RemoveRange(userRelations);
-            _context.UsersChallenges.RemoveRange(userChalllenges);
-            _context.UserStats.Remove(userStats);
+            var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
-            _context.Users.Remove(userToDelete);
+            if (user == null)
+                throw new UserNotFoundException(id); // or throw exception
+
+            var userTasks = await _context.TaskItems
+            .Where(t => t.UserId == id)
+            .ToListAsync();
+
+            var taskIds = userTasks.Select(t => t.Id).ToList();
+
+            var taskCategories = await _context.TasksCategories
+                .Where(tc => taskIds.Contains(tc.TaskId))
+                .ToListAsync();
+
+            var relations = await _context.UsersRelations
+                .Where(r => r.InitiatorId == id || r.RelatedUserId == id)
+                .ToListAsync();
+
+            var challenges = await _context.UsersChallenges
+                .Where(uc => uc.UserId == id)
+                .ToListAsync();
+
+            var taskParticipants = await _context.TasksParticipants
+                .Where(tp => tp.UserId == id)
+                .ToListAsync();
+
+            var stats = await _context.UserStats
+                .FirstOrDefaultAsync(s => s.UserId == id);
+
+            _context.TasksParticipants.RemoveRange(taskParticipants);
+            _context.TasksCategories.RemoveRange(taskCategories);
+            _context.TaskItems.RemoveRange(userTasks);
+            _context.UsersRelations.RemoveRange(relations);
+            _context.UsersChallenges.RemoveRange(challenges);
+            
+
+            if (stats != null)
+                _context.UserStats.Remove(stats);
+
+            _context.Users.Remove(user);
+
             await _context.SaveChangesAsync();
         }
 
+
         public async Task<User?> GetAsync(int id)
         {
-            return await _context.Users
-             .Include(u => u.Rank)
-             .Include(u => u.TaskItems)
-             .Include(u => u.UsersChallenges)
-                 .ThenInclude(uc => uc.Challenge)
-             .Include(u => u.SentRelations)
-             .Include(u => u.ReceivedRelations)
-             .FirstOrDefaultAsync(u => u.Id == id);
+            return await _context.Users.Include(u => u.TaskItems).Include(u => u.UsersChallenges).ThenInclude(uc => uc.Challenge).FirstOrDefaultAsync(u => u.Id == id);
+            
         }
         public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _context.Users.Where(u => u.Email == email).Include(u => u.Rank).Include(u => u.UsersChallenges)
+            return await _context.Users.Where(u => u.Email == email).Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
         public async Task<User?> GetByUsernameAsync(string username)
         {
-            return await _context.Users.Where(u => u.Username == username).Include(u => u.Rank).Include(u => u.UsersChallenges)
+            return await _context.Users.Where(u => u.Username == username).Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
         public async Task<User?> GetByUserCodeAsync(string userCode)
         {
-            return await _context.Users.Where(u => u.UserCode == userCode).Include(u => u.Rank).Include(u => u.UsersChallenges)
+            return await _context.Users.Where(u => u.UserCode == userCode).Include(u => u.UsersChallenges)
                  .ThenInclude(uc => uc.Challenge).Include(u => u.TaskItems)
                  .Include(u => u.Stats).FirstOrDefaultAsync();
         }
 
-        public async Task<UsersRelations?> GetRelationAsync(int initiatorId, int relatedUserId)
+
+        public async Task<List<UsersRelations>> GetUserInvitesTodayAsync(int userId)
         {
-            return await _context.UsersRelations.FirstOrDefaultAsync(r => r.InitiatorId == initiatorId && r.RelatedUserId == relatedUserId);
+            var today = DateTime.UtcNow.Date;
+            List<UsersRelations> usersRelations = await _context.UsersRelations.Where(ur => ur.InitiatorId == userId && ur.CreatedAt.Date == today).ToListAsync();
+            return usersRelations;
         }
 
+        public async Task<UsersRelations> GetUserRelationAsync(int user1Id, int user2Id)
+        {
+            //DOESNT MATTER WHO IS THE INITIATOR. ONLY MATTER IF THE USERS ARE IN A RELATION
+            UsersRelations usersRelations = await _context.UsersRelations.Where(ur => (ur.InitiatorId == user1Id || ur.InitiatorId == user2Id) 
+            && (ur.RelatedUserId == user1Id || ur.RelatedUserId == user2Id)).FirstOrDefaultAsync();
+            return usersRelations;
+        }
+
+        public async Task DeleteAllUnansweredUserRelationsByMoreThanAMonth()
+        {
+            var today = DateTime.UtcNow.Date;
+            List<UsersRelations> usersRelations = await _context.UsersRelations.Where(ur => (ur.CreatedAt.Date.AddDays(30) <= today) 
+            && (ur.RelationStatus == RelationStatus.Pending)).ToListAsync();
+            _context.RemoveRange(usersRelations);
+            _context.SaveChanges();
+        }
+
+        
+
+        public async Task<List<UsersRelations>> GetUnansweredRelationReceivedByUserIdAsync(int relatedUserId)
+        {
+            return await _context.UsersRelations
+                .Include(r => r.Initiator)
+                .Include(r => r.RelatedUser)
+                .Where(r => r.RelatedUserId == relatedUserId &&
+                            r.RelationStatus == RelationStatus.Pending)
+                .ToListAsync();
+        }
 
         //public void RespondToRequest(UsersRelations relation)
         //{
@@ -89,22 +149,18 @@ namespace TaskManagerApp.Repositories
         //_context.SaveChanges();
         //}
 
-        public async Task<bool> RespondToRequestAsync(UsersRelations relation)
+        public async Task RespondToRequestAsync(UsersRelations relation)
         {
             var relationToModify = await _context.UsersRelations
                 .FirstOrDefaultAsync(r =>
                     r.InitiatorId == relation.InitiatorId &&
                     r.RelatedUserId == relation.RelatedUserId);
 
-            if (relationToModify == null)
-                return false;
-
             relationToModify.RelationStatus = relation.RelationStatus;
             relationToModify.RelationType = relation.RelationType;
+            relation.TimeOfAction = relation.TimeOfAction;
 
             await _context.SaveChangesAsync();
-
-            return true;
         }
 
         //public void SendRequest(UsersRelations relation)
@@ -115,26 +171,39 @@ namespace TaskManagerApp.Repositories
 
         public async Task SendRequestAsync(UsersRelations relation)
         {
+            relation.RelationStatus = RelationStatus.Pending;
+            relation.RelationType = null;
+            relation.CreatedAt = DateTime.UtcNow;
+            relation.TimeOfAction = null;
             await _context.UsersRelations.AddAsync(relation);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAccountInfoAsync(User item)
+        public async Task UpdateAccountInfoAsync(UpdateAccountDto item, int userId)
         {
-            User userToModify = _context.Users.Where(u => u.Id == item.Id).FirstOrDefault();
-            userToModify.Username = item.Username;
-            userToModify.Email = item.Email;
-            userToModify.PasswordHash = item.PasswordHash;
+            var user = await _context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            user.Username = item.Username;
+            user.Email = item.Email;
+            user.PasswordHash = item.Password;
+            user.IsEmailVerified = item.IsEmailVerified;
             await _context.SaveChangesAsync();
         }
-        public async Task UpdateUserInfoAsync(User item)
+
+        public async Task UpdateUserReminders(ReminderSettingsDto reminderSettingsDto, int userId)
         {
-            User userToModify = _context.Users.Where(u => u.Id == item.Id).FirstOrDefault();
-            userToModify.Points = item.Points;
-            userToModify.RankId = item.RankId;
-            userToModify.Rank = item.Rank;
-            userToModify.Streak = item.Streak;
-            userToModify.LastActive = item.LastActive;
+            var user = await _context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            user.ReminderStartBefore = reminderSettingsDto.ReminderStartBefore;
+            user.ReminderInterval = reminderSettingsDto.ReminderInterval;
+            await _context.SaveChangesAsync();
+        }
+        public async Task UpdateUserInfoAsync(UpdateUserDto item, int id)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            user.Points = item.Points;
+            user.RankId = item.RankId;
+            user.Streak = item.Streak;
+            user.LastActive = item.LastActive;
+
             await _context.SaveChangesAsync();
         }
         public async Task<List<User>> GetFriendsListAsync(User item)
@@ -154,5 +223,14 @@ namespace TaskManagerApp.Repositories
 
             return initiatedFriendships.Concat(acceptedFriendships).OrderBy(u => u.Username).ToList();
         }
+
+        public async Task<List<User>> GetUsersWithStreaksAboutToEndAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+            List<User> users = await _context.Users.Where(u => u.LastActive != default && u.LastActive < today).ToListAsync();
+            return users;
+        }
+
+
     }
 }
