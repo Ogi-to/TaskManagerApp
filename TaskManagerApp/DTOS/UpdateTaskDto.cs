@@ -22,6 +22,8 @@ namespace TaskManagerApp.DTOS
 
         public StateType State { get; set; }
         // Foreign key
+        public int Priority { get; set; } = 3;
+
         public List<int> CategoryIds { get; set; } = new List<int>();
     }
 }

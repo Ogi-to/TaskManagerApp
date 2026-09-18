@@ -58,28 +58,40 @@ namespace TaskManagerApp.Services
 
         public async Task UpdateUserStatsAsync(UserStats userStats)
         {
-            //checks if the current stats of an user by id are different from the new 
-            //and accordingly updates if necessary
             var currentStats = await _repository.GetAsync(userStats.UserId);
+
             if (currentStats == null)
             {
                 throw new UserNotFoundException(userStats.UserId);
             }
+
             var user = await _userRepository.GetAsync(userStats.UserId);
-            if (user == null) 
+
+            if (user == null)
             {
                 throw new UserNotFoundException(userStats.UserId);
             }
+
             if (user.Streak > currentStats.HighestStreak)
             {
                 currentStats.HighestStreak = user.Streak;
             }
+
             if (user.Points > currentStats.TotalPoints)
             {
                 currentStats.TotalPoints = user.Points;
             }
-            currentStats.TasksCompleted = userStats.TasksCompleted;
-            currentStats.ChallengesCompleted = userStats.ChallengesCompleted;
+
+            // Никога не намаляваме TasksCompleted
+            if (userStats.TasksCompleted > currentStats.TasksCompleted)
+            {
+                currentStats.TasksCompleted = userStats.TasksCompleted;
+            }
+
+            if (userStats.ChallengesCompleted > currentStats.ChallengesCompleted)
+            {
+                currentStats.ChallengesCompleted = userStats.ChallengesCompleted;
+            }
 
             await _repository.UpdateAsync(currentStats);
         }

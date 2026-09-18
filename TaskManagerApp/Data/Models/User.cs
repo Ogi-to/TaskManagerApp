@@ -38,6 +38,9 @@ namespace TaskManagerApp.Data.Models
         [StringLength(8)]
         public string UserCode { get; set; }
 
+        public List<Friendship> SentFriendRequests { get; set; } = new();
+
+        public List<Friendship> ReceivedFriendRequests { get; set; } = new();
         public List<UsersChallenges> UsersChallenges { get; set; } = new List<UsersChallenges>();
 
         public List<TaskItem> TaskItems { get; set; }

@@ -25,9 +25,30 @@ namespace TaskManagerApp.Repositories
 
         public async Task UpdateAsync(UserStats item)
         {
-            var userStatsToModify = await _context.UserStats.Where(us => us.UserId == item.UserId).FirstOrDefaultAsync();
-            userStatsToModify.TasksCompleted = item.TasksCompleted;
-            userStatsToModify.ChallengesCompleted = item.ChallengesCompleted;
+            var userStatsToModify = await _context.UserStats
+                .Where(us => us.UserId == item.UserId)
+                .FirstOrDefaultAsync();
+
+            if (userStatsToModify == null)
+            {
+                throw new Exception(
+                    $"User stats for user with ID {item.UserId} not found.");
+            }
+
+            // TasksCompleted е исторически брояч.
+            // Никога не го намаляваме.
+            if (item.TasksCompleted > userStatsToModify.TasksCompleted)
+            {
+                userStatsToModify.TasksCompleted = item.TasksCompleted;
+            }
+
+            if (item.ChallengesCompleted >
+                userStatsToModify.ChallengesCompleted)
+            {
+                userStatsToModify.ChallengesCompleted =
+                    item.ChallengesCompleted;
+            }
+
             await _context.SaveChangesAsync();
         }
     }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TaskManagerApp.Data;
@@ -11,9 +12,11 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    partial class TaskManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260829100520_AddCalendars")]
+    partial class AddCalendars
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,35 +163,6 @@ namespace TaskManagerApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EmailCodes");
-                });
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Friendship", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ReceiverId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SenderId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReceiverId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Friendships");
                 });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.Rank", b =>
@@ -470,25 +444,6 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Friendship", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.User", "Receiver")
-                        .WithMany("ReceivedFriendRequests")
-                        .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", "Sender")
-                        .WithMany("SentFriendRequests")
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Receiver");
-
-                    b.Navigation("Sender");
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.Calendar", "Calendar")
@@ -610,11 +565,7 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>
                 {
-                    b.Navigation("ReceivedFriendRequests");
-
                     b.Navigation("ReceivedRelations");
-
-                    b.Navigation("SentFriendRequests");
 
                     b.Navigation("SentRelations");
 

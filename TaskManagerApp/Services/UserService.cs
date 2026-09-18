@@ -89,11 +89,6 @@ namespace TaskManagerApp.Services
                 throw new EmailorPasswordNotFoundException();
             }
 
-            if (testUser.IsEmailVerified == false)
-            {
-                throw new EmailNotVerifiedException();
-            }
-
             var isPasswordValid = _hashPasswordService.VerifyPassword(loginUserDto.Password, testUser.PasswordHash);
 
             if (isPasswordValid == false)
@@ -187,6 +182,52 @@ namespace TaskManagerApp.Services
             }
             user.IsEmailVerified = true;
             await _userRepository.UpdateAccountInfoAsync(user);
+        }
+        public async Task<bool> IsEmailVerified(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            return user.IsEmailVerified;
+        }
+
+        public async Task SendVerificationCode(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null)
+            {
+                throw new EmailorPasswordNotFoundException();
+            }
+
+            await _emailCodeService.SendVerificationCode(email);
+        }
+
+        public async Task<UserDto?> GetUserByEmail(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            return new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Streak = user.Streak,
+                Points = user.Points,
+                RankId = user.RankId,
+                CreatedAt = user.CreatedAt,
+                LastActive = user.LastActive,
+                UserCode = user.UserCode
+            };
         }
     }
 }

@@ -24,9 +24,25 @@ namespace TaskManagerApp.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTask([FromBody] AddTaskDto task)
         {
-            await _taskItemService.AddTaskAsync(task);
+            try
+            {
+                await _taskItemService.AddTaskAsync(task);
 
-            return Created();
+                return Created();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("=================================");
+                Console.WriteLine("ADD TASK ERROR");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("=================================");
+
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -61,10 +77,10 @@ namespace TaskManagerApp.Controllers
             return Ok("Task updated successfully.");
         }
 
-        [HttpPut("complete")]
-        public async Task<IActionResult> CompleteTask([FromBody] int taskId)
+        [HttpPut("complete/{id}")]
+        public async Task<IActionResult> CompleteTask(int id)
         {
-            await _taskItemService.CompleteTask(taskId);
+            await _taskItemService.CompleteTask(id);
 
             return Ok("Task completed.");
         }

@@ -61,6 +61,12 @@ namespace TaskManagerApp.Services
             if (existingUser == null) {
                 throw new UserNotFoundException(task.UserId);
             }
+
+            if (task.Priority < 1 || task.Priority > 3)
+            {
+                task.Priority = 2;
+            }
+
             var finalTask = new TaskItem
             {
                 Name = task.Name,
@@ -68,6 +74,8 @@ namespace TaskManagerApp.Services
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 UserId = existingUser.Id,
+                Priority = task.Priority,
+                CalendarId = task.CalendarId
             };
             foreach (var categoryId in task.CategoryIds)
             {
@@ -99,14 +107,18 @@ namespace TaskManagerApp.Services
         public async Task<List<TaskDto>> ShowAllTasksByUserIdAsync(int userId)
         {
             var existingUser = await _userRepository.GetAsync(userId);
+
             if (existingUser == null)
             {
                 throw new UserNotFoundException(userId);
             }
-            var tasks = await _taskItemRepository.GetAllByUserAsync(existingUser.Id);
+
+            var tasks =
+                await _taskItemRepository.GetAllByUserAsync(existingUser.Id);
+
             if (!tasks.Any())
             {
-                throw new UserDoesntHaveTasksException();
+                return new List<TaskDto>();
             }
 
             return tasks.Select(t => new TaskDto
@@ -118,9 +130,12 @@ namespace TaskManagerApp.Services
                 EndDate = t.EndDate,
                 State = t.State,
                 UserId = t.UserId,
+                Priority = t.Priority,
+
                 Categories = t.TasksCategories
-            .Select(tc => tc.Category.Name)
-            .ToList()
+                    .Select(tc => tc.Category.Name)
+                    .ToList()
+
             }).ToList();
         }
 
@@ -141,7 +156,8 @@ namespace TaskManagerApp.Services
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 State = task.State,
-                UserId = task.Id,
+                UserId = task.UserId,
+                Priority = task.Priority,
                 Categories = task.TasksCategories
                     .Select(tc => tc.Category.Name)
                     .ToList()
@@ -167,6 +183,7 @@ namespace TaskManagerApp.Services
             existingTask.StartDate = dto.StartDate;
             existingTask.EndDate = dto.EndDate;
             existingTask.State = dto.State;
+            existingTask.Priority = dto.Priority;
 
             existingTask.TasksCategories = dto.CategoryIds.Select(categoryId => new TasksCategories
             {
@@ -180,11 +197,12 @@ namespace TaskManagerApp.Services
         //used in updateTaskAsync
         private static bool AreTasksEqual(TaskItem existing,UpdateTaskDto updated )
         {
-            bool scalarFieldsEqual = existing.Name == updated.Name &&
-                existing.Description == updated.Description &&
-                existing.StartDate == updated.StartDate &&
-                existing.EndDate == updated.EndDate;
-
+                bool scalarFieldsEqual =
+                 existing.Name == updated.Name &&
+                 existing.Description == updated.Description &&
+                 existing.StartDate == updated.StartDate &&
+                 existing.EndDate == updated.EndDate &&
+                 existing.Priority == updated.Priority;
             if (scalarFieldsEqual == false)
             {
                 return false;

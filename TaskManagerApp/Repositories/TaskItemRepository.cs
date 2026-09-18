@@ -22,10 +22,19 @@ namespace TaskManagerApp.Repositories
 
         public async Task DeleteAsync(int itemId)
         {
-            var item = await _context.TaskItems.FindAsync(itemId);
-            // the delete behaviour in "on model creating" is restrict, so the relationships have to be updated manually
+            var item = await _context.TaskItems
+                .Include(t => t.TasksCategories)
+                .FirstOrDefaultAsync(t => t.Id == itemId);
+
+            if (item == null)
+            {
+                return;
+            }
+
             _context.TasksCategories.RemoveRange(item.TasksCategories);
+
             _context.TaskItems.Remove(item);
+
             await _context.SaveChangesAsync();
         }
 
@@ -43,9 +52,12 @@ namespace TaskManagerApp.Repositories
         //}
         public async Task<List<TaskItem>> GetAllByUserAsync(int userId)
         {
-
-                return await _context.TaskItems
-           .Where(t => t.UserId == userId).ToListAsync();
+            return await _context.TaskItems
+                .Where(t => t.UserId == userId)
+                .Include(t => t.TasksCategories)
+                    .ThenInclude(tc => tc.Category)
+                .OrderBy(t => t.StartDate)
+                .ToListAsync();
         }
 
         public async Task<List<TaskItem>> GetAllAsync()
@@ -54,7 +66,7 @@ namespace TaskManagerApp.Repositories
            .Include(t => t.TasksCategories)
                .ThenInclude(tc => tc.Category)
            .ToListAsync();
-        }
+        } 
 
 
         public async Task UpdateAsync(TaskItem item)
@@ -95,9 +107,16 @@ namespace TaskManagerApp.Repositories
 
         public async Task CompleteTask(int taskId)
         {
-            var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
-            task.State = StateType.Completed;
+            var task = await _context.TaskItems
+                .FirstOrDefaultAsync(t => t.Id == taskId);
 
+            if (task == null)
+            {
+                throw new KeyNotFoundException(
+                    $"Task with id {taskId} was not found.");
+            }
+
+            task.State = StateType.Completed;
 
             await _context.SaveChangesAsync();
         }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TaskManagerApp.Data;
@@ -11,9 +12,11 @@ using TaskManagerApp.Data;
 namespace TaskManagerApp.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    partial class TaskManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260828180308_AddTaskPriority1")]
+    partial class AddTaskPriority1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,57 +24,6 @@ namespace TaskManagerApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Calendar", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
-
-                    b.ToTable("Calendars");
-                });
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.CalendarMember", b =>
-                {
-                    b.Property<int>("CalendarId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("JoinedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("CalendarId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("CalendarMembers");
-                });
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.Category", b =>
                 {
@@ -162,35 +114,6 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("EmailCodes");
                 });
 
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Friendship", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ReceiverId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SenderId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReceiverId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Friendships");
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.Rank", b =>
                 {
                     b.Property<int>("Id")
@@ -262,9 +185,6 @@ namespace TaskManagerApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CalendarId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -290,8 +210,6 @@ namespace TaskManagerApp.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CalendarId");
 
                     b.HasIndex("UserId");
 
@@ -429,36 +347,6 @@ namespace TaskManagerApp.Migrations
                     b.ToTable("UsersRelations");
                 });
 
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Calendar", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.User", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
-                });
-
-            modelBuilder.Entity("TaskManagerApp.Data.Models.CalendarMember", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.Calendar", "Calendar")
-                        .WithMany("Members")
-                        .HasForeignKey("CalendarId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Calendar");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.Challenge", b =>
                 {
                     b.HasOne("TaskManagerApp.Data.Models.Category", "Category")
@@ -470,39 +358,13 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Friendship", b =>
-                {
-                    b.HasOne("TaskManagerApp.Data.Models.User", "Receiver")
-                        .WithMany("ReceivedFriendRequests")
-                        .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TaskManagerApp.Data.Models.User", "Sender")
-                        .WithMany("SentFriendRequests")
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Receiver");
-
-                    b.Navigation("Sender");
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.TaskItem", b =>
                 {
-                    b.HasOne("TaskManagerApp.Data.Models.Calendar", "Calendar")
-                        .WithMany("Tasks")
-                        .HasForeignKey("CalendarId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("TaskManagerApp.Data.Models.User", "User")
                         .WithMany("TaskItems")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Calendar");
 
                     b.Navigation("User");
                 });
@@ -586,13 +448,6 @@ namespace TaskManagerApp.Migrations
                     b.Navigation("RelatedUser");
                 });
 
-            modelBuilder.Entity("TaskManagerApp.Data.Models.Calendar", b =>
-                {
-                    b.Navigation("Members");
-
-                    b.Navigation("Tasks");
-                });
-
             modelBuilder.Entity("TaskManagerApp.Data.Models.Category", b =>
                 {
                     b.Navigation("TasksCategories");
@@ -610,11 +465,7 @@ namespace TaskManagerApp.Migrations
 
             modelBuilder.Entity("TaskManagerApp.Data.Models.User", b =>
                 {
-                    b.Navigation("ReceivedFriendRequests");
-
                     b.Navigation("ReceivedRelations");
-
-                    b.Navigation("SentFriendRequests");
 
                     b.Navigation("SentRelations");
 

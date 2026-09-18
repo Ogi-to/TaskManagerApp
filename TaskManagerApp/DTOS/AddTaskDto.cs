@@ -20,6 +20,10 @@ namespace TaskManagerApp.DTOS
         // Foreign key
         public int UserId { get; set; }
 
+        public int Priority { get; set; } = 3;
+
         public List<int> CategoryIds { get; set; } = new List<int>();
+
+        public int? CalendarId { get; set; }
     }
 }

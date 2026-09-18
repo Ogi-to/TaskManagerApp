@@ -5,13 +5,26 @@ namespace TaskManagerApp.InterfacesServices
 {
     public interface IUserService
     {
-        public Task RegisterUser(RegisterUserDto registerUserDto);
-        public Task<UserDto> LogInUser(LoginUserDto loginUserDto);
-        public Task<UserDto> GetUserById(int id);
-        public Task DeleteAccount(int userId);
-        public Task VerifyEmail(VerifyEmailDto verifyEmailDto);
-        public Task UpdateStreak(User user);
-        public Task UpdateRank(User user);
-        public Task UpdatePoints(int userId, int points);
+        Task RegisterUser(RegisterUserDto registerUserDto);
+
+        Task<UserDto> LogInUser(LoginUserDto loginUserDto);
+
+        Task<UserDto> GetUserById(int id);
+
+        Task DeleteAccount(int userId);
+
+        Task VerifyEmail(VerifyEmailDto verifyEmailDto);
+
+        Task SendVerificationCode(string email);
+
+        Task<UserDto?> GetUserByEmail(string email);
+
+        Task<bool> IsEmailVerified(string email);
+
+        Task UpdateStreak(User user);
+
+        Task UpdateRank(User user);
+
+        Task UpdatePoints(int userId, int points);
     }
 }
